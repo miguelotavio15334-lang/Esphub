@@ -1,145 +1,85 @@
--- CIRILOMI HUB - FIX FINAL - HOP + 2X AUTO ROUBA
-repeat task.wait() until game:IsLoaded()
-pcall(function() game.CoreGui.CiriloClownESP:Destroy() end)
+-- CIRILOMI - AUTO ROUBAR VERMELHO PEGA O MAIOR DO SERVER
+getgenv().RoubarVermelhoMaior = false
 
-getgenv().ESP = true
-getgenv().RoubarNormal = false
-getgenv().RoubarFast = false
-getgenv().HopRoxo = false
-
--- FUNÇÃO ROUBAR
-local function Roubar(mob, fast)
-    pcall(function()
-        local plr = game.Players.LocalPlayer
-        local char = plr.Character
-        if not char or not mob:FindFirstChild("HumanoidRootPart") then return end
-        
-        local prompt = mob:FindFirstChildOfClass("ProximityPrompt", true)
-        
-        if fast then
-            -- RAPIDO 💔
-            char.HumanoidRootPart.CFrame = mob.HumanoidRootPart.CFrame * CFrame.new(0,0,2)
-            task.wait(0.15)
-            if prompt then fireproximityprompt(prompt) end
-            -- tenta todos os remotes comuns
-            game:GetService("ReplicatedStorage"):FindFirstChild("Remotes") -- tenta chamar
-            game.ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("CommF_"):InvokeServer("StealJester")
-            game.ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("CommF_"):InvokeServer("StealClown")
-        else
-            -- NORMAL VERDE
-            char.Humanoid:MoveTo(mob.HumanoidRootPart.Position)
-            repeat task.wait(0.3) until (char.HumanoidRootPart.Position - mob.HumanoidRootPart.Position).Magnitude < 12
-            if prompt then fireproximityprompt(prompt) end
-        end
-    end)
+local function GetValorDoPalhaco(nome)
+    nome = nome:lower()
+    if nome:find("1m") or nome:find("1000000") or nome:find("1000k") then return 1000000 end
+    if nome:find("600") then return 600000 end
+    if nome:find("300") then return 300000 end
+    if nome:find("200") then return 200000 end
+    if nome:find("150") then return 150000 end
+    if nome:find("100") then return 100000 end
+    return 0
 end
 
--- FUNÇÃO HOP QUE TROCA MESMO
-local function ServerHop()
-    local TPS = game:GetService("TeleportService")
-    local Http = game:GetService("HttpService")
-    local code = string.format("getgenv().ESP=true getgenv().RoubarNormal=%s getgenv().RoubarFast=%s getgenv().HopRoxo=true", tostring(getgenv().RoubarNormal), tostring(getgenv().RoubarFast))
-    pcall(function() queue_on_teleport(code) end)
-    
-    local list = Http:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100")).data
-    for _,s in pairs(list) do
-        if s.id ~= game.JobId and s.playing < s.maxPlayers then
-            TPS:TeleportToPlaceInstance(game.PlaceId, s.id, game.Players.LocalPlayer)
-            return
-        end
-    end
-    TPS:Teleport(game.PlaceId)
-end
+local function RoubarMaior(fast)
+    local maior = nil
+    local maiorValor = 0
 
--- LOOP PRINCIPAL - ESP + ROUBA + HOP
-task.spawn(function()
-    while true do task.wait(0.4)
-        local achouBom = false
-        
-        for _,v in pairs(workspace:GetDescendants()) do
-            if v:IsA("Model") and v:FindFirstChild("Humanoid") and (v.Name:lower():find("clown") or v.Name:lower():find("jester") or v.Name:lower():find("palha")) then
-                
-                -- ESP ARCO IRIS NO 1M
-                if not v:FindFirstChild("CiriloESP") and getgenv().ESP then
-                    local bill = Instance.new("BillboardGui", v)
-                    bill.Name = "CiriloESP"
-                    bill.Size = UDim2.fromOffset(200,50)
-                    bill.StudsOffset = Vector3.new(0,4,0)
-                    bill.AlwaysOnTop = true
-                    local txt = Instance.new("TextLabel", bill)
-                    txt.Size = UDim2.fromOffset(200,50)
-                    txt.BackgroundTransparency = 1
-                    txt.Text = "🤡 "..v.Name
-                    txt.Font = Enum.Font.GothamBold
-                    txt.TextSize = 14
-                    txt.TextStrokeTransparency = 0
-                    if v.Name:find("1M") then
-                        task.spawn(function() while txt.Parent do for i=0,1,0.02 do txt.TextColor3 = Color3.fromHSV(i,1,1) task.wait() end end end)
-                    else
-                        txt.TextColor3 = Color3.new(1,1,1)
-                    end
-                end
-
-                -- CHECA SE É BOM
-                if v.Name:find("600") or v.Name:find("1M") then
-                    achouBom = true
-                    if getgenv().RoubarFast then Roubar(v, true) end
-                    if getgenv().RoubarNormal then Roubar(v, false) end
+    -- ACHA O MAIOR DO SERVER
+    for _,v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") then
+            local n = v.Name:lower()
+            if n:find("clown") or n:find("jester") or n:find("palha") then
+                local valor = GetValorDoPalhaco(v.Name)
+                if valor > maiorValor then
+                    maiorValor = valor
+                    maior = v
                 end
             end
         end
+    end
 
-        -- HOP LOGICA
-        if getgenv().HopRoxo and not achouBom then
-            ServerHop()
-            task.wait(10)
-        elseif achouBom and getgenv().HopRoxo then
-            getgenv().HopRoxo = false
-            game.StarterGui:SetCore("SendNotification", {Title="CiriloMi", Text="ACHOU 600K/1M! Parei o hop", Duration=5})
+    if maior then
+        print("Maior palhaço do server: "..maior.Name.." = "..maiorValor)
+        pcall(function()
+            local char = game.Players.LocalPlayer.Character
+            char.HumanoidRootPart.CFrame = maior.HumanoidRootPart.CFrame * CFrame.new(0,0,1.5)
+            task.wait(0.2)
+            local prompt = maior:FindFirstChildOfClass("ProximityPrompt", true)
+            if prompt then fireproximityprompt(prompt) end
+            for _,p in pairs(maior:GetDescendants()) do
+                if p:IsA("ProximityPrompt") then fireproximityprompt(p) end
+            end
+            -- Tenta todos os remotes de roubo
+            game.ReplicatedStorage.Remotes.CommF_:InvokeServer("StealClown", maior.Name)
+            game.ReplicatedStorage.Remotes.CommF_:InvokeServer("StealJester", maior.Name)
+        end)
+    end
+end
+
+-- LOOP DO VERMELHO - PEGA SEMPRE O MAIOR
+task.spawn(function()
+    while true do task.wait(0.5)
+        if getgenv().RoubarVermelhoMaior then
+            RoubarMaior(true)
         end
     end
 end)
 
--- GUI SIMPLES QUE APARECE CERTEZA
-local gui = Instance.new("ScreenGui", game.CoreGui)
-gui.Name = "CiriloClownESP"
+-- BOTÃO ATUALIZADO
+local gui = game.CoreGui:FindFirstChild("CiriloClownESP")
+if gui then
+    local main = gui:FindFirstChild("Frame") or gui:GetChildren()[1]
+    -- Recria botão vermelho
+    for _,v in pairs(main:GetChildren()) do if v.Text:find("RAPIDO") then v:Destroy() end end
 
-local main = Instance.new("Frame", gui)
-main.Size = UDim2.new(0,260,0,200)
-main.Position = UDim2.new(0,20,0,200)
-main.BackgroundColor3 = Color3.fromRGB(20,20,20)
-Instance.new("UICorner", main).CornerRadius = UDim.new(0,8)
-main.Active = true
-main.Draggable = true
-
-local function btn(txt,y,color,func)
     local b = Instance.new("TextButton", main)
     b.Size = UDim2.new(1,-20,0,35)
-    b.Position = UDim2.new(0,10,0,y)
-    b.Text = txt
-    b.BackgroundColor3 = color
+    b.Position = UDim2.new(0,10,0,55)
+    b.Text = "AUTO ROUBAR [RAPIDO 💔] - PEGA MAIOR"
+    b.BackgroundColor3 = Color3.fromRGB(200,0,0)
     b.TextColor3 = Color3.new(1,1,1)
     b.Font = Enum.Font.GothamBold
-    b.TextSize = 11
+    b.TextSize = 10
     Instance.new("UICorner", b).CornerRadius = UDim.new(0,6)
-    b.MouseButton1Click:Connect(func)
-    return b
+    b.MouseButton1Click:Connect(function()
+        getgenv().RoubarVermelhoMaior = not getgenv().RoubarVermelhoMaior
+        getgenv().RoubarNormal = false
+        getgenv().RoubarFast = getgenv().RoubarVermelhoMaior
+        b.Text = getgenv().RoubarVermelhoMaior and "VERMELHO ON - PEGANDO MAIOR 💔" or "AUTO ROUBAR [RAPIDO 💔] - PEGA MAIOR"
+        print("Vermelho Maior: "..tostring(getgenv().RoubarVermelhoMaior))
+    end)
 end
 
-btn("AUTO ROUBAR [NORMAL] - VERDE", 10, Color3.fromRGB(0,170,0), function()
-    getgenv().RoubarNormal = not getgenv().RoubarNormal
-    getgenv().RoubarFast = false
-end)
-
-btn("AUTO ROUBAR [RAPIDO 💔] - VERMELHO", 55, Color3.fromRGB(200,0,0), function()
-    getgenv().RoubarFast = not getgenv().RoubarFast
-    getgenv().RoubarNormal = false
-end)
-
-btn("AUTO HOP até 600K/1M [OFF]", 100, Color3.fromRGB(0,200,0), function()
-    getgenv().HopRoxo = not getgenv().HopRoxo
-end)
-
-btn("TROCAR SERVER AGORA", 145, Color3.fromRGB(120,0,200), function() ServerHop() end)
-
-print("CiriloMi - Tudo Junto ATIVADO")
+print("Vermelho atualizado - Agora pega o maior do server!")
