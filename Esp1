@@ -1,164 +1,76 @@
--- CIRILOMI HUB - VERSÃO COMPLETA COM AUTO ROUBAR APARECENDO
-repeat task.wait() until game:IsLoaded()
-pcall(function() game.CoreGui:FindFirstChild("CiriloMiHub"):Destroy() end)
-pcall(function() game.CoreGui:FindFirstChild("CiriloClownESP"):Destroy() end)
+-- FIX AUTO HOP VERDE - TROCA NA CERTEZA
+getgenv().HopRoxo = false
 
-local gui = Instance.new("ScreenGui", game.CoreGui)
-gui.Name = "CiriloMiHub"
-gui.ResetOnSpawn = false
-
-local main = Instance.new("Frame", gui)
-main.Size = UDim2.new(0, 280, 0, 460)
-main.Position = UDim2.new(0.5, -140, 0.5, -230)
-main.BackgroundColor3 = Color3.fromRGB(18,18,18)
-main.BorderSizePixel = 0
-Instance.new("UICorner", main).CornerRadius = UDim.new(0,12)
-main.Active = true
-main.Draggable = true
-
-local top = Instance.new("TextLabel", main)
-top.Size = UDim2.new(1,0,0,40)
-top.Text = " CiriloMi - ESP Palhaço 🤡"
-top.BackgroundTransparency = 1
-top.TextColor3 = Color3.new(1,1,1)
-top.Font = Enum.Font.GothamBold
-top.TextSize = 14
-top.TextXAlignment = Left
-
-local status = Instance.new("TextLabel", main)
-status.Size = UDim2.new(1,0,0,20)
-status.Position = UDim2.new(0,0,0,40)
-status.Text = "Status: Pronto"
-status.BackgroundTransparency = 1
-status.TextColor3 = Color3.fromRGB(150,150,150)
-status.Font = Enum.Font.Gotham
-status.TextSize = 11
-
-getgenv().ESP = false
-getgenv().RoubarNormal = false
-getgenv().RoubarMaior = false
-getgenv().Hop = false
-
-local function criarBotao(texto, y, cor, func)
-    local b = Instance.new("TextButton", main)
-    b.Size = UDim2.new(1,-20,0,42)
-    b.Position = UDim2.new(0,10,0,y)
-    b.Text = texto
-    b.BackgroundColor3 = cor
-    b.TextColor3 = Color3.new(1,1,1)
-    b.Font = Enum.Font.GothamBold
-    b.TextSize = 11
-    Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
-    b.MouseButton1Click:Connect(func)
-    return b
-end
-
--- FUNÇÕES
-local function getValor(nome)
-    if nome:find("1M") then return 1000000 end
-    if nome:find("600") then return 600000 end
-    if nome:find("300") then return 300000 end
-    if nome:find("200") then return 200000 end
-    if nome:find("150") then return 150000 end
-    if nome:find("100") then return 100000 end
-    return 0
-end
-
-local function serverHop()
+local function ServerHopFIX()
+    local PlaceId = game.PlaceId
+    local JobId = game.JobId
+    local Players = game.Players
     local TPS = game:GetService("TeleportService")
     local Http = game:GetService("HttpService")
-    local PlaceId = game.PlaceId
-    pcall(function() queue_on_teleport("getgenv().Hop=true") end)
-    local servers = Http:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..PlaceId.."/servers/Public?sortOrder=Asc&limit=100")).data
-    for _,s in pairs(servers) do
-        if s.id ~= game.JobId and s.playing < s.maxPlayers then
-            TPS:TeleportToPlaceInstance(PlaceId, s.id, game.Players.LocalPlayer)
-            return
+    
+    -- Salva o que tava ligado pra voltar ligado
+    local saveCode = string.format([[
+        getgenv().ESP = %s
+        getgenv().RoubarNormal = %s
+        getgenv().RoubarFast = %s
+        getgenv().HopRoxo = true
+    ]], tostring(getgenv().ESP), tostring(getgenv().RoubarNormal), tostring(getgenv().RoubarFast))
+
+    pcall(function()
+        queue_on_teleport(saveCode)
+        syn.queue_on_teleport(saveCode)
+    end)
+
+    -- Pega lista de server
+    local servers = {}
+    local success, result = pcall(function()
+        return Http:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..PlaceId.."/servers/Public?sortOrder=Desc&limit=100"))
+    end)
+    
+    if success and result and result.data then
+        for _, s in pairs(result.data) do
+            if s.id ~= JobId and s.playing < s.maxPlayers - 1 then
+                print("Indo pra server: "..s.id)
+                TPS:TeleportToPlaceInstance(PlaceId, s.id, Players.LocalPlayer)
+                task.wait(2)
+                return
+            end
         end
     end
-    TPS:Teleport(PlaceId)
+    
+    -- Se falhar o de cima, tenta o modo 2 que nunca falha
+    print("Tentando modo 2 de hop")
+    TPS:Teleport(PlaceId, Players.LocalPlayer)
 end
 
--- LOOP
+-- Liga o loop do hop
 task.spawn(function()
-    while true do task.wait(0.5)
-        local maior = nil
-        local maiorValor = 0
-        for _,v in pairs(workspace:GetDescendants()) do
-            if v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") then
-                if v.Name:lower():find("clown") or v.Name:lower():find("jester") or v.Name:lower():find("palha") then
-                    local val = getValor(v.Name)
-                    if val > maiorValor then maiorValor = val maior = v end
+    while true do task.wait(1)
+        if getgenv().HopRoxo then
+            local achouBom = false
+            -- Verifica se tem 600k/1M no server
+            pcall(function()
+                for _,v in pairs(workspace:GetDescendants()) do
+                    if v:IsA("Model") and (v.Name:lower():find("clown") or v.Name:lower():find("jester")) then
+                        if v.Name:find("600") or v.Name:find("1M") or v.Name:find("1000000") then
+                            achouBom = true
+                        end
+                    end
                 end
+            end)
+            
+            if not achouBom then
+                print("Nenhum 600K/1M aqui, trocando...")
+                ServerHopFIX()
+                task.wait(10) -- espera carregar o novo server
+            else
+                print("ACHOU 600K/1M! Parando hop")
+                getgenv().HopRoxo = false
             end
-        end
-        if maior then
-            if getgenv().RoubarMaior then -- VERMELHO PEGA MAIOR
-                pcall(function()
-                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = maior.HumanoidRootPart.CFrame * CFrame.new(0,0,2)
-                    task.wait(0.2)
-                    local pr = maior:FindFirstChildOfClass("ProximityPrompt", true)
-                    if pr then fireproximityprompt(pr) end
-                end)
-            elseif getgenv().RoubarNormal and maiorValor >= 100000 then
-                pcall(function()
-                    game.Players.LocalPlayer.Character.Humanoid:MoveTo(maior.HumanoidRootPart.Position)
-                end)
-            end
-            if getgenv().Hop and maiorValor >= 600000 then
-                getgenv().Hop = false
-                status.Text = "ACHOU "..maior.Name.." - PAROU"
-            end
-        else
-            if getgenv().Hop then serverHop() task.wait(8) end
         end
     end
 end)
 
--- BOTOES NA ORDEM CERTA
-criarBotao("ESP Palhaço [OFF]", 70, Color3.fromRGB(70,70,70), function()
-    getgenv().ESP = not getgenv().ESP
-end)
-
-local btnNormal = criarBotao("AUTO ROUBAR [NORMAL] - VERDE", 120, Color3.fromRGB(0,170,0), function()
-    getgenv().RoubarNormal = not getgenv().RoubarNormal
-    getgenv().RoubarMaior = false
-    status.Text = getgenv().RoubarNormal and "Roubar Normal ON" or "Roubar OFF"
-end)
-
-local btnVermelho = criarBotao("AUTO ROUBAR [RAPIDO 💔] - PEGA MAIOR", 170, Color3.fromRGB(200,0,0), function()
-    getgenv().RoubarMaior = not getgenv().RoubarMaior
-    getgenv().RoubarNormal = false
-    if getgenv().RoubarMaior then
-        status.Text = "VERMELHO ON - PEGANDO MAIOR"
-        btnVermelho.Text = "VERMELHO [ON] - PEGANDO MAIOR 💔"
-    else
-        status.Text = "Roubar OFF"
-        btnVermelho.Text = "AUTO ROUBAR [RAPIDO 💔] - PEGA MAIOR"
-    end
-end)
-
-criarBotao("Trocar Server [Hop]", 220, Color3.fromRGB(130,0,255), function() serverHop() end)
-
-criarBotao("Auto Hop até 600K/1M [OFF]", 270, Color3.fromRGB(0,200,0), function()
-    getgenv().Hop = not getgenv().Hop
-    status.Text = getgenv().Hop and "Auto Hop ON - Caçando" or "Auto Hop OFF"
-end)
-
-criarBotao("Limpar ESP", 320, Color3.fromRGB(50,50,50), function()
-    for _,v in pairs(workspace:GetDescendants()) do if v.Name=="CiriloESP" then v:Destroy() end end
-end)
-
-local legenda = Instance.new("TextLabel", main)
-legenda.Size = UDim2.new(1,-20,0,80)
-legenda.Position = UDim2.new(0,10,0,370)
-legenda.Text = "🤡 LEGENDA:\n100K=Branco 150K=Verde 200K=Azul\n300K=Roxo 600K=Laranja 1M=ARCO-ÍRIS\n\nVERDE = Anda | VERMELHO = Pega o MAIOR do server"
-legenda.BackgroundTransparency = 1
-legenda.TextColor3 = Color3.fromRGB(200,200,200)
-legenda.Font = Enum.Font.Gotham
-legenda.TextSize = 10
-legenda.TextWrapped = true
-legenda.TextYAlignment = Top
-legenda.TextXAlignment = Left
-
-print("CiriloMi Hub NOVO carregado com Auto Roubar!")
+-- ATIVA AGORA
+getgenv().HopRoxo = true
+print("Auto Hop FIX ATIVADO - Vai trocar em 7s se não achar")
