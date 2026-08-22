@@ -1,0 +1,215 @@
+-- CIRILOMI HUB V2 - CRIADO DO ZERO
+repeat task.wait() until game:IsLoaded()
+
+-- LIMPA TUDO ANTIGO
+for _,v in pairs(game.CoreGui:GetChildren()) do
+    if v.Name:find("Cirilo") then v:Destroy() end
+end
+getgenv().CiriloV2 = {ESP=false, Normal=false, Vermelho=false, Hop=false}
+
+local Players = game.Players
+local LocalPlayer = Players.LocalPlayer
+local TPS = game:GetService("TeleportService")
+
+-- GUI
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "CiriloMiV2"
+
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0,285,0,500)
+main.Position = UDim2.new(0.5,-142,0.5,-250)
+main.BackgroundColor3 = Color3.fromRGB(15,15,15)
+main.BorderSizePixel = 0
+Instance.new("UICorner", main).CornerRadius = UDim.new(0,12)
+main.Active = true
+main.Draggable = true
+
+local stroke = Instance.new("UIStroke", main)
+stroke.Color = Color3.fromRGB(130,0,255)
+stroke.Thickness = 2
+
+local title = Instance.new("TextLabel", main)
+title.Size = UDim2.new(1,0,0,45)
+title.Text = " CIRILOMI V2 🤡"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 16
+title.TextColor3 = Color3.new(1,1,1)
+title.BackgroundTransparency = 1
+title.TextXAlignment = Left
+
+local status = Instance.new("TextLabel", main)
+status.Size = UDim2.new(1,0,0,20)
+status.Position = UDim2.new(0,0,0,38)
+status.Text = "Status: Pronto"
+status.Font = Enum.Font.Gotham
+status.TextSize = 12
+status.TextColor3 = Color3.fromRGB(180,180,180)
+status.BackgroundTransparency = 1
+
+local function makeBtn(txt, y, col, callback)
+    local b = Instance.new("TextButton", main)
+    b.Size = UDim2.new(1,-20,0,44)
+    b.Position = UDim2.new(0,10,0,y)
+    b.BackgroundColor3 = col
+    b.Text = txt
+    b.TextColor3 = Color3.new(1,1,1)
+    b.Font = Enum.Font.GothamBold
+    b.TextSize = 11
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
+    b.MouseButton1Click:Connect(function() callback(b) end)
+    return b
+end
+
+-- LOGICA
+local function getValor(name)
+    local n = name:lower()
+    if n:find("1m") or n:find("1000") then return 1000000 end
+    if n:find("600") then return 600000 end
+    if n:find("300") then return 300000 end
+    if n:find("200") then return 200000 end
+    if n:find("150") then return 150000 end
+    if n:find("100") then return 100000 end
+    return 0
+end
+
+local function getCor(valor)
+    if valor >= 1000000 then return Color3.fromRGB(255,0,255) end
+    if valor >= 600000 then return Color3.fromRGB(255,140,0) end
+    if valor >= 300000 then return Color3.fromRGB(130,0,255) end
+    if valor >= 200000 then return Color3.fromRGB(0,150,255) end
+    if valor >= 150000 then return Color3.fromRGB(0,255,0) end
+    return Color3.new(1,1,1)
+end
+
+local function hop()
+    status.Text = "Status: Trocando server..."
+    local code = 'getgenv().CiriloV2.Hop=true getgenv().CiriloV2.ESP=true getgenv().CiriloV2.Vermelho=true'
+    pcall(function() queue_on_teleport(code) syn.queue_on_teleport(code) end)
+    local id = game.PlaceId
+    local ok, res = pcall(function()
+        return game.HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..id.."/servers/Public?sortOrder=Asc&limit=100"))
+    end)
+    if ok and res.data then
+        for _,s in pairs(res.data) do
+            if s.id ~= game.JobId and s.playing < s.maxPlayers-1 then
+                TPS:TeleportToPlaceInstance(id, s.id, LocalPlayer)
+                return
+            end
+        end
+    end
+    TPS:Teleport(id)
+end
+
+-- LOOP PRINCIPAL
+task.spawn(function()
+    while true do task.wait(0.3)
+        local melhor = nil
+        local melhorValor = 0
+        local lista = {}
+
+        for _,m in pairs(workspace:GetDescendants()) do
+            if m:IsA("Model") and m:FindFirstChild("HumanoidRootPart") and m:FindFirstChild("Humanoid") then
+                if m.Name:lower():find("clown") or m.Name:lower():find("jester") or m.Name:lower():find("palha") then
+                    local v = getValor(m.Name)
+                    table.insert(lista, {model=m, valor=v})
+                    if v > melhorValor then melhorValor = v melhor = m end
+
+                    -- ESP
+                    if getgenv().CiriloV2.ESP and not m:FindFirstChild("ESP_Cirilo") then
+                        local bg = Instance.new("BillboardGui", m)
+                        bg.Name = "ESP_Cirilo"
+                        bg.Size = UDim2.new(0,200,0,50)
+                        bg.StudsOffset = Vector3.new(0,4,0)
+                        bg.AlwaysOnTop = true
+                        local lb = Instance.new("TextLabel", bg)
+                        lb.Size = UDim2.new(1,0,1,0)
+                        lb.BackgroundTransparency = 1
+                        lb.Text = "🤡 "..m.Name.." 💰"..v/1000.."K"
+                        lb.TextColor3 = getCor(v)
+                        lb.TextStrokeTransparency = 0
+                        lb.Font = Enum.Font.GothamBold
+                        lb.TextSize = 13
+                        if v >= 1000000 then
+                            task.spawn(function()
+                                while lb.Parent do
+                                    for i=0,1,0.02 do lb.TextColor3 = Color3.fromHSV(i,1,1) task.wait() end
+                                end
+                            end)
+                        end
+                    end
+                end
+            end
+        end
+
+        -- AUTO ROUBAR
+        if melhor then
+            if getgenv().CiriloV2.Vermelho then -- VERMELHO PEGA MAIOR
+                status.Text = "Roubando MAIOR: "..melhor.Name
+                pcall(function()
+                    LocalPlayer.Character.HumanoidRootPart.CFrame = melhor.HumanoidRootPart.CFrame * CFrame.new(0,0,1.5)
+                    task.wait(0.25)
+                    for _,p in pairs(melhor:GetDescendants()) do if p:IsA("ProximityPrompt") then fireproximityprompt(p) end end
+                end)
+            elseif getgenv().CiriloV2.Normal then
+                status.Text = "Roubando Normal: "..melhor.Name
+                pcall(function()
+                    LocalPlayer.Character.Humanoid:MoveTo(melhor.HumanoidRootPart.Position)
+                end)
+            end
+
+            if getgenv().CiriloV2.Hop and melhorValor >= 600000 then
+                status.Text = "ACHOU "..melhorValor/1000.."K! PAROU HOP"
+                getgenv().CiriloV2.Hop = false
+            end
+        else
+            if getgenv().CiriloV2.Hop then hop() task.wait(7) end
+        end
+    end
+end)
+
+-- BOTOES
+makeBtn("ESP Palhaço [OFF]", 65, Color3.fromRGB(60,60,60), function(b)
+    getgenv().CiriloV2.ESP = not getgenv().CiriloV2.ESP
+    b.Text = getgenv().CiriloV2.ESP and "ESP Palhaço [ON]" or "ESP Palhaço [OFF]"
+    b.BackgroundColor3 = getgenv().CiriloV2.ESP and Color3.fromRGB(0,170,0) or Color3.fromRGB(60,60,60)
+    if not getgenv().CiriloV2.ESP then for _,v in pairs(workspace:GetDescendants()) do if v.Name=="ESP_Cirilo" then v:Destroy() end end end
+end)
+
+makeBtn("AUTO ROUBAR [NORMAL] - VERDE", 115, Color3.fromRGB(0,170,0), function(b)
+    getgenv().CiriloV2.Normal = not getgenv().CiriloV2.Normal
+    getgenv().CiriloV2.Vermelho = false
+    b.Text = getgenv().CiriloV2.Normal and "AUTO ROUBAR [NORMAL] ON" or "AUTO ROUBAR [NORMAL] - VERDE"
+end)
+
+makeBtn("AUTO ROUBAR [RAPIDO 💔] - PEGA MAIOR", 165, Color3.fromRGB(200,0,0), function(b)
+    getgenv().CiriloV2.Vermelho = not getgenv().CiriloV2.Vermelho
+    getgenv().CiriloV2.Normal = false
+    b.Text = getgenv().CiriloV2.Vermelho and "VERMELHO ON - PEGANDO MAIOR 💔" or "AUTO ROUBAR [RAPIDO 💔] - PEGA MAIOR"
+    status.Text = getgenv().CiriloV2.Vermelho and "Status: VERMELHO ON - Pega maior do server" or "Status: Pronto"
+end)
+
+makeBtn("Trocar Server [Hop]", 215, Color3.fromRGB(130,0,255), function() hop() end)
+
+makeBtn("Auto Hop até 600K/1M [OFF]", 265, Color3.fromRGB(0,200,0), function(b)
+    getgenv().CiriloV2.Hop = not getgenv().CiriloV2.Hop
+    b.Text = getgenv().CiriloV2.Hop and "Auto Hop até 600K/1M [ON] 💜" or "Auto Hop até 600K/1M [OFF]"
+    b.BackgroundColor3 = getgenv().CiriloV2.Hop and Color3.fromRGB(0,150,0) or Color3.fromRGB(0,200,0)
+end)
+
+makeBtn("Limpar ESP", 315, Color3.fromRGB(40,40,40), function()
+    for _,v in pairs(workspace:GetDescendants()) do if v.Name=="ESP_Cirilo" then v:Destroy() end end
+end)
+
+local legenda = Instance.new("TextLabel", main)
+legenda.Position = UDim2.new(0,10,0,370)
+legenda.Size = UDim2.new(1,-20,0,120)
+legenda.Text = "🤡 LEGENDA:\n100K=Branco 150K=Verde 200K=Azul\n300K=Roxo 600K=Laranja 1M=ARCO-ÍRIS\n\nVERDE = Anda até o palhaço\nVERMELHO = Teleporta e pega o MAIOR do server"
+legenda.TextWrapped = true
+legenda.BackgroundTransparency = 1
+legenda.TextColor3 = Color3.fromRGB(180,180,180)
+legenda.Font = Enum.Font.Gotham
+legenda.TextSize = 11
+legenda.TextXAlignment = Left
+legenda.TextYAlignment = Top
+
+game.StarterGui:SetCore("SendNotification", {Title="CiriloMi V2", Text="Hub criado do zero com sucesso!", Duration=3})
