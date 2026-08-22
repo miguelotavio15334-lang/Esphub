@@ -1,0 +1,182 @@
+-- CIRILOMI HUB - AUTO HOP ROXO QUE SALVA TUDO
+repeat task.wait() until game:IsLoaded()
+
+if game.CoreGui:FindFirstChild("CiriloClownESP") then game.CoreGui.CiriloClownESP:Destroy() end
+
+local gui = Instance.new("ScreenGui", gethui and gethui() or game.CoreGui)
+gui.Name = "CiriloClownESP"
+gui.ResetOnSpawn = false
+
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.fromOffset(260, 380)
+main.Position = UDim2.fromScale(0.05, 0.25)
+main.BackgroundColor3 = Color3.fromRGB(15,15,15)
+Instance.new("UICorner", main).CornerRadius = UDim.new(0,8)
+main.Active = true
+main.Draggable = true
+
+local title = Instance.new("TextLabel", main)
+title.Size = UDim2.fromOffset(260,35)
+title.Text = " CiriloMi - Auto Hop ROXO 🤡"
+title.TextXAlignment = Left
+title.TextColor3 = Color3.new(1,1,1)
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.GothamBold
+title.TextSize = 13
+
+local function createBtn(text, y, color, func)
+    local b = Instance.new("TextButton", main)
+    b.Size = UDim2.fromOffset(230, 28)
+    b.Position = UDim2.fromOffset(15, y)
+    b.Text = text
+    b.BackgroundColor3 = color
+    b.TextColor3 = Color3.new(1,1,1)
+    b.Font = Enum.Font.GothamBold
+    b.TextSize = 10
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0,6)
+    b.MouseButton1Click:Connect(func)
+    return b
+end
+
+-- SALVA O QUE TAVA LIGADO
+getgenv().CiriloSave = getgenv().CiriloSave or {
+    ESP = false,
+    RoubarNormal = false,
+    RoubarFast = false,
+    Hop = false
+}
+
+getgenv().ESPClown = getgenv().CiriloSave.ESP
+getgenv().AutoRoubarNormal = getgenv().CiriloSave.RoubarNormal
+getgenv().AutoRoubarFast = getgenv().CiriloSave.RoubarFast
+getgenv().AutoHopRoxo = getgenv().CiriloSave.Hop
+
+local status = Instance.new("TextLabel", main)
+status.Size = UDim2.fromOffset(230, 20)
+status.Position = UDim2.fromOffset(15, 45)
+status.Text = "Status: Carregado"
+status.TextColor3 = Color3.fromRGB(150,150,150)
+status.BackgroundTransparency = 1
+status.Font = Enum.Font.Gotham
+status.TextSize = 10
+
+local function saveSettings()
+    getgenv().CiriloSave.ESP = getgenv().ESPClown
+    getgenv().CiriloSave.RoubarNormal = getgenv().AutoRoubarNormal
+    getgenv().CiriloSave.RoubarFast = getgenv().AutoRoubarFast
+    getgenv().CiriloSave.Hop = getgenv().AutoHopRoxo
+end
+
+local function serverHopRoxo()
+    saveSettings()
+    local code = [[
+        getgenv().CiriloSave = {
+            ESP = ]]..tostring(getgenv().ESPClown)..[[,
+            RoubarNormal = ]]..tostring(getgenv().AutoRoubarNormal)..[[,
+            RoubarFast = ]]..tostring(getgenv().AutoRoubarFast)..[[,
+            Hop = true
+        }
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/CiriloMi/CiriloMi-Hub/main/esp.lua"))()
+        -- Se tu usa arquivo local, troca pela loadstring do hub
+    ]]
+    -- Tenta salvar pra quando teleportar
+    pcall(function()
+        queue_on_teleport(code)
+    end)
+    
+    local Http = game:GetService("HttpService")
+    local TPS = game:GetService("TeleportService")
+    local servers = Http:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100")).data
+    for _,s in pairs(servers) do
+        if s.playing < s.maxPlayers and s.id ~= game.JobId then
+            TPS:TeleportToPlaceInstance(game.PlaceId, s.id, game.Players.LocalPlayer)
+            break
+        end
+    end
+end
+
+-- AUTO LIGA TUDO SE VOLTOU DE HOP
+task.spawn(function()
+    task.wait(2)
+    if getgenv().CiriloSave.Hop then
+        status.Text = "Voltou de Hop - Religando tudo..."
+        status.TextColor3 = Color3.fromRGB(170,0,255)
+        task.wait(1)
+        if getgenv().CiriloSave.ESP then getgenv().ESPClown = true end
+        if getgenv().CiriloSave.RoubarNormal then getgenv().AutoRoubarNormal = true end
+        if getgenv().CiriloSave.RoubarFast then getgenv().AutoRoubarFast = true end
+        getgenv().AutoHopRoxo = true
+        status.Text = "Tudo religado! Caçando..."
+    end
+end)
+
+-- LOOP DO HOP ROXO
+task.spawn(function()
+    while true do task.wait(1)
+        if getgenv().AutoHopRoxo then
+            local foundGood = false
+            pcall(function()
+                for _,v in pairs(workspace.Enemies:GetChildren()) do
+                    if v.Name:lower():find("clown") and (v.Name:find("600") or v.Name:find("1M")) then
+                        foundGood = true
+                        status.Text = "ACHOU ".. v.Name .." - PARANDO HOP"
+                        status.TextColor3 = Color3.fromRGB(0,255,0)
+                        getgenv().AutoHopRoxo = false
+                        saveSettings()
+                    end
+                end
+            end)
+            if not foundGood then
+                status.Text = "Auto Hop ROXO - Trocando em 7s..."
+                task.wait(7)
+                if getgenv().AutoHopRoxo then serverHopRoxo() end
+            end
+        end
+    end
+end)
+
+createBtn("ESP Palhaço [OFF]", 70, Color3.fromRGB(60,60,60), function()
+    getgenv().ESPClown = not getgenv().ESPClown
+    saveSettings()
+    status.Text = getgenv().ESPClown and "ESP Ligado" or "ESP Desligado"
+end)
+
+createBtn("Auto Roubar [NORMAL]", 103, Color3.fromRGB(0,170,0), function()
+    getgenv().AutoRoubarNormal = not getgenv().AutoRoubarNormal
+    if getgenv().AutoRoubarNormal then getgenv().AutoRoubarFast = false end
+    saveSettings()
+    status.Text = getgenv().AutoRoubarNormal and "Roubar NORMAL ON" or "Roubar OFF"
+end)
+
+createBtn("Auto Roubar [RAPIDO 💔]", 136, Color3.fromRGB(255,0,0), function()
+    getgenv().AutoRoubarFast = not getgenv().AutoRoubarFast
+    if getgenv().AutoRoubarFast then getgenv().AutoRoubarNormal = false end
+    saveSettings()
+    status.Text = getgenv().AutoRoubarFast and "Roubar RAPIDO ON" or "Roubar OFF"
+end)
+
+createBtn("AUTO HOP ROXO [OFF]", 169, Color3.fromRGB(120, 0, 180), function()
+    getgenv().AutoHopRoxo = not getgenv().AutoHopRoxo
+    saveSettings()
+    if getgenv().AutoHopRoxo then
+        status.Text = "AUTO HOP ROXO ON - Vai salvar tudo!"
+        status.TextColor3 = Color3.fromRGB(170,0,255)
+    else
+        status.Text = "Auto Hop Roxo OFF"
+        status.TextColor3 = Color3.fromRGB(150,150,150)
+    end
+end)
+
+local legend = Instance.new("TextLabel", main)
+legend.Size = UDim2.fromOffset(230, 150)
+legend.Position = UDim2.fromOffset(15, 210)
+legend.Text = "💜 AUTO HOP ROXO:\n\nAtiva ele que ele troca de server sozinho a cada 7s.\n\nQuando trocar, ele LIGA SOZINHO tudo que tu deixou ligado (ESP, Auto Roubar Normal/Rápido).\n\nQuando achar 600K ou 1M ele PARA sozinho pra tu roubar."
+legend.TextXAlignment = Left
+legend.BackgroundTransparency = 1
+legend.TextColor3 = Color3.fromRGB(200,200,200)
+legend.Font = Enum.Font.Gotham
+legend.TextSize = 10
+legend.TextYAlignment = Top
+legend.TextWrapped = true
+
+print("CiriloMi Hub Roxo carregado!")
