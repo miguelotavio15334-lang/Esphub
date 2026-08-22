@@ -1,140 +1,145 @@
--- CIRILOMI HUB - FIX TELA PRETA - VERSÃO FINAL
+-- CIRILOMI HUB - FIX FINAL - HOP + 2X AUTO ROUBA
 repeat task.wait() until game:IsLoaded()
 pcall(function() game.CoreGui.CiriloClownESP:Destroy() end)
-pcall(function() gethui().CiriloClownESP:Destroy() end)
 
-local gui = Instance.new("ScreenGui")
-gui.Name = "CiriloClownESP"
-gui.Parent = gethui and gethui() or game.CoreGui
-gui.ResetOnSpawn = false
-gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
-local main = Instance.new("Frame", gui)
-main.Size = UDim2.new(0, 270, 0, 380)
-main.Position = UDim2.new(0.5, -135, 0.5, -190)
-main.BackgroundColor3 = Color3.fromRGB(25,25,25)
-main.BorderSizePixel = 0
-Instance.new("UICorner", main).CornerRadius = UDim.new(0,10)
-main.Active = true
-main.Draggable = true
-
-local top = Instance.new("Frame", main)
-top.Size = UDim2.new(1,0,0,35)
-top.BackgroundColor3 = Color3.fromRGB(130,0,255)
-Instance.new("UICorner", top).CornerRadius = UDim.new(0,10)
-
-local title = Instance.new("TextLabel", top)
-title.Size = UDim2.new(1,0,1,0)
-title.Text = "  CiriloMi - Auto Hop ROXO 🤡"
-title.TextXAlignment = Left
-title.TextColor3 = Color3.new(1,1,1)
-title.BackgroundTransparency = 1
-title.Font = Enum.Font.GothamBold
-title.TextSize = 13
-
-local scroll = Instance.new("ScrollingFrame", main)
-scroll.Size = UDim2.new(1,0,1,-35)
-scroll.Position = UDim2.new(0,0,0,35)
-scroll.CanvasSize = UDim2.new(0,0,0,500)
-scroll.ScrollBarThickness = 4
-scroll.BackgroundTransparency = 1
-scroll.BorderSizePixel = 0
-
-local layout = Instance.new("UIListLayout", scroll)
-layout.Padding = UDim.new(0,8)
-layout.SortOrder = Enum.SortOrder.LayoutOrder
-
-local pad = Instance.new("UIPadding", scroll)
-pad.PaddingTop = UDim.new(0,10)
-pad.PaddingLeft = UDim.new(0,10)
-pad.PaddingRight = UDim.new(0,10)
-
-local function makeBtn(text, color, callback)
-    local b = Instance.new("TextButton", scroll)
-    b.Size = UDim2.new(1,0,0,38)
-    b.Text = text
-    b.BackgroundColor3 = color
-    b.TextColor3 = Color3.new(1,1,1)
-    b.Font = Enum.Font.GothamBold
-    b.TextSize = 11
-    Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
-    b.MouseButton1Click:Connect(function()
-        local r = callback()
-        if r then b.Text = r end
-    end)
-    return b
-end
-
-getgenv().ESP = false
+getgenv().ESP = true
 getgenv().RoubarNormal = false
 getgenv().RoubarFast = false
 getgenv().HopRoxo = false
 
-local status = makeBtn("Status: Pronto", Color3.fromRGB(40,40,40), function() return "Status: Pronto" end)
-status.AutoButtonColor = false
+-- FUNÇÃO ROUBAR
+local function Roubar(mob, fast)
+    pcall(function()
+        local plr = game.Players.LocalPlayer
+        local char = plr.Character
+        if not char or not mob:FindFirstChild("HumanoidRootPart") then return end
+        
+        local prompt = mob:FindFirstChildOfClass("ProximityPrompt", true)
+        
+        if fast then
+            -- RAPIDO 💔
+            char.HumanoidRootPart.CFrame = mob.HumanoidRootPart.CFrame * CFrame.new(0,0,2)
+            task.wait(0.15)
+            if prompt then fireproximityprompt(prompt) end
+            -- tenta todos os remotes comuns
+            game:GetService("ReplicatedStorage"):FindFirstChild("Remotes") -- tenta chamar
+            game.ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("CommF_"):InvokeServer("StealJester")
+            game.ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("CommF_"):InvokeServer("StealClown")
+        else
+            -- NORMAL VERDE
+            char.Humanoid:MoveTo(mob.HumanoidRootPart.Position)
+            repeat task.wait(0.3) until (char.HumanoidRootPart.Position - mob.HumanoidRootPart.Position).Magnitude < 12
+            if prompt then fireproximityprompt(prompt) end
+        end
+    end)
+end
 
-makeBtn("ESP PALHAÇO [OFF]", Color3.fromRGB(60,60,60), function()
-    getgenv().ESP = not getgenv().ESP
-    if getgenv().ESP then
-        status.Text = "ESP: ON"
-        return "ESP PALHAÇO [ON]"
-    else
-        status.Text = "ESP: OFF"
-        return "ESP PALHAÇO [OFF]"
-    end
-end)
-
-makeBtn("AUTO ROUBAR [NORMAL] - VERDE", Color3.fromRGB(0,170,0), function()
-    getgenv().RoubarNormal = not getgenv().RoubarNormal
-    if getgenv().RoubarNormal then getgenv().RoubarFast = false status.Text = "Roubar Normal: ON" return "AUTO ROUBAR [NORMAL] ON" 
-    else status.Text = "Roubar: OFF" return "AUTO ROUBAR [NORMAL] - VERDE" end
-end)
-
-makeBtn("AUTO ROUBAR [RAPIDO 💔] - VERMELHO", Color3.fromRGB(200,0,0), function()
-    getgenv().RoubarFast = not getgenv().RoubarFast
-    if getgenv().RoubarFast then getgenv().RoubarNormal = false status.Text = "Roubar Rapido: ON" return "AUTO ROUBAR [RAPIDO] ON" 
-    else status.Text = "Roubar: OFF" return "AUTO ROUBAR [RAPIDO 💔] - VERMELHO" end
-end)
-
-makeBtn("AUTO HOP ROXO [OFF] - SALVA TUDO", Color3.fromRGB(120,0,200), function()
-    getgenv().HopRoxo = not getgenv().HopRoxo
-    if getgenv().HopRoxo then
-        status.Text = "HOP ROXO ON - Trocando..."
-        return "AUTO HOP ROXO [ON] 💜"
-    else
-        status.Text = "Hop Roxo OFF"
-        return "AUTO HOP ROXO [OFF] - SALVA TUDO"
-    end
-end)
-
-makeBtn("TROCAR SERVER AGORA", Color3.fromRGB(80,80,80), function()
+-- FUNÇÃO HOP QUE TROCA MESMO
+local function ServerHop()
     local TPS = game:GetService("TeleportService")
     local Http = game:GetService("HttpService")
-    local data = Http:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100")).data
-    for _,s in pairs(data) do
-        if s.playing < s.maxPlayers and s.id ~= game.JobId then
-            queue_on_teleport([[
-                getgenv().HopRoxo = true
-                getgenv().ESP = true
-                loadstring(game:HttpGet("https://raw.githubusercontent.com/"))()
-            ]])
+    local code = string.format("getgenv().ESP=true getgenv().RoubarNormal=%s getgenv().RoubarFast=%s getgenv().HopRoxo=true", tostring(getgenv().RoubarNormal), tostring(getgenv().RoubarFast))
+    pcall(function() queue_on_teleport(code) end)
+    
+    local list = Http:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100")).data
+    for _,s in pairs(list) do
+        if s.id ~= game.JobId and s.playing < s.maxPlayers then
             TPS:TeleportToPlaceInstance(game.PlaceId, s.id, game.Players.LocalPlayer)
-            break
+            return
         end
     end
-    return "TROCAR SERVER AGORA"
+    TPS:Teleport(game.PlaceId)
+end
+
+-- LOOP PRINCIPAL - ESP + ROUBA + HOP
+task.spawn(function()
+    while true do task.wait(0.4)
+        local achouBom = false
+        
+        for _,v in pairs(workspace:GetDescendants()) do
+            if v:IsA("Model") and v:FindFirstChild("Humanoid") and (v.Name:lower():find("clown") or v.Name:lower():find("jester") or v.Name:lower():find("palha")) then
+                
+                -- ESP ARCO IRIS NO 1M
+                if not v:FindFirstChild("CiriloESP") and getgenv().ESP then
+                    local bill = Instance.new("BillboardGui", v)
+                    bill.Name = "CiriloESP"
+                    bill.Size = UDim2.fromOffset(200,50)
+                    bill.StudsOffset = Vector3.new(0,4,0)
+                    bill.AlwaysOnTop = true
+                    local txt = Instance.new("TextLabel", bill)
+                    txt.Size = UDim2.fromOffset(200,50)
+                    txt.BackgroundTransparency = 1
+                    txt.Text = "🤡 "..v.Name
+                    txt.Font = Enum.Font.GothamBold
+                    txt.TextSize = 14
+                    txt.TextStrokeTransparency = 0
+                    if v.Name:find("1M") then
+                        task.spawn(function() while txt.Parent do for i=0,1,0.02 do txt.TextColor3 = Color3.fromHSV(i,1,1) task.wait() end end end)
+                    else
+                        txt.TextColor3 = Color3.new(1,1,1)
+                    end
+                end
+
+                -- CHECA SE É BOM
+                if v.Name:find("600") or v.Name:find("1M") then
+                    achouBom = true
+                    if getgenv().RoubarFast then Roubar(v, true) end
+                    if getgenv().RoubarNormal then Roubar(v, false) end
+                end
+            end
+        end
+
+        -- HOP LOGICA
+        if getgenv().HopRoxo and not achouBom then
+            ServerHop()
+            task.wait(10)
+        elseif achouBom and getgenv().HopRoxo then
+            getgenv().HopRoxo = false
+            game.StarterGui:SetCore("SendNotification", {Title="CiriloMi", Text="ACHOU 600K/1M! Parei o hop", Duration=5})
+        end
+    end
 end)
 
-local info = Instance.new("TextLabel", scroll)
-info.Size = UDim2.new(1,0,0,110)
-info.Text = "💜 COMO USA:\n1. Liga ESP\n2. Liga 1 modo de Roubar\n3. Liga HOP ROXO\nEle vai trocar sozinho e quando trocar já volta tudo ligado!"
-info.TextWrapped = true
-info.TextXAlignment = Left
-info.TextYAlignment = Top
-info.BackgroundTransparency = 1
-info.TextColor3 = Color3.fromRGB(200,200,200)
-info.Font = Enum.Font.Gotham
-info.TextSize = 11
+-- GUI SIMPLES QUE APARECE CERTEZA
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "CiriloClownESP"
 
-print("CiriloMi - FIX Tela Preta ON")
-game.StarterGui:SetCore("SendNotification", {Title="CiriloMi Hub", Text="Hub carregado! Arraste pra mover", Duration=3})
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0,260,0,200)
+main.Position = UDim2.new(0,20,0,200)
+main.BackgroundColor3 = Color3.fromRGB(20,20,20)
+Instance.new("UICorner", main).CornerRadius = UDim.new(0,8)
+main.Active = true
+main.Draggable = true
+
+local function btn(txt,y,color,func)
+    local b = Instance.new("TextButton", main)
+    b.Size = UDim2.new(1,-20,0,35)
+    b.Position = UDim2.new(0,10,0,y)
+    b.Text = txt
+    b.BackgroundColor3 = color
+    b.TextColor3 = Color3.new(1,1,1)
+    b.Font = Enum.Font.GothamBold
+    b.TextSize = 11
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0,6)
+    b.MouseButton1Click:Connect(func)
+    return b
+end
+
+btn("AUTO ROUBAR [NORMAL] - VERDE", 10, Color3.fromRGB(0,170,0), function()
+    getgenv().RoubarNormal = not getgenv().RoubarNormal
+    getgenv().RoubarFast = false
+end)
+
+btn("AUTO ROUBAR [RAPIDO 💔] - VERMELHO", 55, Color3.fromRGB(200,0,0), function()
+    getgenv().RoubarFast = not getgenv().RoubarFast
+    getgenv().RoubarNormal = false
+end)
+
+btn("AUTO HOP até 600K/1M [OFF]", 100, Color3.fromRGB(0,200,0), function()
+    getgenv().HopRoxo = not getgenv().HopRoxo
+end)
+
+btn("TROCAR SERVER AGORA", 145, Color3.fromRGB(120,0,200), function() ServerHop() end)
+
+print("CiriloMi - Tudo Junto ATIVADO")
