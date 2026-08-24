@@ -1,4 +1,4 @@
--- MIIIGUEX V23 - R ATIVA AUTO HOP + ANTI-LOOP + FIX DELTA
+-- MIIIGUEX V24 - R FORÇADO + ANTI-LOOP + DELTA FIX
 getgenv().MIIIGUEX_DATA = getgenv().MIIIGUEX_DATA or {autoHop=false,noclip=true,autoK=true,guiHidden=true,savedTP=nil,speed=true,tpAuto=true}
 getgenv().MIIIGUEX_DATA.guiHidden = true
 getgenv().Visitados = getgenv().Visitados or {}
@@ -11,36 +11,28 @@ local HS = game:GetService("HttpService")
 local Plots = workspace:WaitForChild("Plots")
 local SG = game.StarterGui
 
--- FUNÇÃO HOP ANTI-LOOP QUE NÃO VOLTA NO MESMO SERVER
+-- HOP FORÇADO QUE TROCA SIM
 local function ServerHop()
-    SG:SetCore("SendNotification",{Title="AUTO HOP", Text="Trocando de servidor...", Duration=3})
+    SG:SetCore("SendNotification",{Title="AUTO HOP", Text="TROCANDO DE SERVER AGORA!", Duration=2})
+    task.wait(0.2)
     local PlaceId = game.PlaceId
     table.insert(getgenv().Visitados, game.JobId)
-    if #getgenv().Visitados > 50 then table.remove(getgenv().Visitados, 1) end
 
-    local url = "https://games.roblox.com/v1/games/"..PlaceId.."/servers/Public?sortOrder=Desc&limit=100"
-    local success, result = pcall(function() return HS:JSONDecode(game:HttpGet(url)) end)
-    if success and result and result.data then
-        local servers = result.data
-        -- embaralha
-        for i = #servers, 2, -1 do local j = math.random(i) servers[i], servers[j] = servers[j], servers[i] end
-        for _, server in pairs(servers) do
-            local jaVisitado = false
-            for _, v in pairs(getgenv().Visitados) do if v == server.id then jaVisitado = true break end end
-            if not jaVisitado and server.playing < server.maxPlayers and server.id ~= game.JobId then
-                pcall(function() TS:TeleportToPlaceInstance(PlaceId, server.id, LP) end)
-                return
-            end
-        end
-    end
-    TS:Teleport(PlaceId, LP)
+    -- JEITO 1: NORMAL (MAIS RAPIDO)
+    local ok = pcall(function() TS:Teleport(PlaceId, LP) end)
+    if ok then return end
+    task.wait(0.5)
+    -- JEITO 2: FALLBACK
+    pcall(function() TS:TeleportToPlaceInstance(PlaceId, game.JobId, LP) end)
+    task.wait(0.5)
+    pcall(function() TS:Teleport(PlaceId) end)
 end
 
 local queueteleport = queue_on_teleport or (syn and syn.queue_on_teleport)
 if queueteleport then
     queueteleport([[
         getgenv().MIIIGUEX_DATA = {autoHop=true,noclip=true,autoK=true,guiHidden=true,savedTP=nil,speed=true,tpAuto=true}
-        wait(4)
+        wait(3)
         loadstring(game:HttpGet("https://pastebin.com/raw/SEU_LINK_AQUI"))()
     ]])
 end
@@ -58,7 +50,7 @@ local bKitar=btn("Auto Kitar [K]: ON",146,Color3.fromRGB(35,85,55))
 local bTP=btn("Q AUTO AO PEGAR: ON",194,Color3.fromRGB(35,85,55))
 local bSave=btn("💾 SALVAR BASE [X]",242)
 local bUse=btn("📍 USAR TP [Q]",290,Color3.fromRGB(60,60,90))
-local bAutoHop=btn("AUTO HOP 100K+ [R]: "..(getgenv().MIIIGUEX_DATA.autoHop and "ON" or "OFF"),338, getgenv().MIIIGUEX_DATA.autoHop and Color3.fromRGB(35,85,55) or Color3.fromRGB(45,47,55))
+local bAutoHop=btn("AUTO HOP [R]: "..(getgenv().MIIIGUEX_DATA.autoHop and "ON" or "OFF"),338, getgenv().MIIIGUEX_DATA.autoHop and Color3.fromRGB(35,85,55) or Color3.fromRGB(45,47,55))
 local bClose=btn("FECHAR [M]",386,Color3.fromRGB(80,40,40))
 
 local noclip=true local autoK=true local tpAuto=true local speedOn=true local autoHop=getgenv().MIIIGUEX_DATA.autoHop or false
@@ -89,17 +81,10 @@ end
 local function ativarAutoHop()
     autoHop = not autoHop
     getgenv().MIIIGUEX_DATA.autoHop = autoHop
-    bAutoHop.Text="AUTO HOP 100K+ [R]: "..(autoHop and "ON" or "OFF")
+    bAutoHop.Text="AUTO HOP [R]: "..(autoHop and "ON" or "OFF")
     bAutoHop.BackgroundColor3=autoHop and Color3.fromRGB(35,85,55) or Color3.fromRGB(45,47,55)
     if autoHop then
-        SG:SetCore("SendNotification",{Title="AUTO HOP [R]", Text="Ligado! Procurando 100K+...", Duration=3})
-        local best,val = temPalhaco100k()
-        if best then
-            SG:SetCore("SendNotification",{Title="💰 ACHOU 100K+!", Text=best.Name.." - $"..val.."/s", Duration=5})
-        else
-            task.wait(1)
-            ServerHop()
-        end
+        SG:SetCore("SendNotification",{Title="AUTO HOP [R]", Text="ATIVADO! Vai trocar em 3s se não achar 100K+", Duration=3})
     else
         SG:SetCore("SendNotification",{Title="AUTO HOP [R]", Text="Desligado", Duration=2})
     end
@@ -113,11 +98,10 @@ bSave.MouseButton1Click:Connect(salvarPos) bUse.MouseButton1Click:Connect(usarPo
 bAutoHop.MouseButton1Click:Connect(ativarAutoHop)
 bClose.MouseButton1Click:Connect(toggleGUI) openBtn.MouseButton1Click:Connect(toggleGUI)
 
--- TECLAS R, M, X, Q, K
 UIS.InputBegan:Connect(function(i,gp)
     if gp then return end
     if i.KeyCode==Enum.KeyCode.M then toggleGUI()
-    elseif i.KeyCode==Enum.KeyCode.R then ativarAutoHop() -- R ATIVA O HOP
+    elseif i.KeyCode==Enum.KeyCode.R then ativarAutoHop()
     elseif i.KeyCode==Enum.KeyCode.X then salvarPos()
     elseif i.KeyCode==Enum.KeyCode.Q then usarPos()
     elseif i.KeyCode==Enum.KeyCode.K and autoK then
@@ -128,18 +112,15 @@ end)
 RS.Stepped:Connect(function() pcall(function() local char = LP.Character if not char then return end if noclip then for _,v in pairs(char:GetDescendants()) do if v:IsA("BasePart") then v.CanCollide=false end end end if speedOn then local hum=char:FindFirstChildOfClass("Humanoid") if hum and hum.WalkSpeed~=150 then hum.WalkSpeed=150 end end end) end)
 
 task.spawn(function()
-    task.wait(4)
+    task.wait(3)
     if getgenv().MIIIGUEX_DATA.savedTP then savedCFrame=CFrame.new(unpack(getgenv().MIIIGUEX_DATA.savedTP)) local hrp=LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") if hrp then hrp.CFrame=savedCFrame end
     else local basePos=getBase() if basePos then savedCFrame=CFrame.new(basePos) getgenv().MIIIGUEX_DATA.savedTP={savedCFrame:GetComponents()} bSave.Text="💾 X AUTO: BASE SALVA" bSave.BackgroundColor3=Color3.fromRGB(35,85,55) end end
     pcall(function() LP.Character.Humanoid.WalkSpeed=150 end)
-    local best, val = temPalhaco100k()
-    if best then SG:SetCore("SendNotification",{Title="💰 ACHOU 100K+!", Text=best.Name.." - $"..val.."/s", Duration=5})
-    else if autoHop then SG:SetCore("SendNotification",{Title="AUTO HOP [R]", Text="Sem 100K+, trocando em 5s...", Duration=4}) end end
 end)
 
 task.spawn(function()
     local tempoSem100k = 0
-    while true do task.wait(0.08)
+    while true do task.wait(0.1)
         pcall(function()
             local char=LP.Character if not char then return end local hrp=char:FindFirstChild("HumanoidRootPart") if not hrp then return end
             local tool=char:FindFirstChildWhichIsA("Tool")
@@ -148,10 +129,22 @@ task.spawn(function()
                 if tpAuto and savedCFrame then hrp.CFrame=savedCFrame task.wait(0.35) local t=char:FindFirstChildWhichIsA("Tool") if t then local nn=string.lower(t.Name) if not (string.find(nn,"cloak") or string.find(nn,"invis") or string.find(nn,"cape") or string.find(nn,"ghost")) then t.Parent=LP.Backpack end end end
             else
                 local best,val = temPalhaco100k()
-                if best then tempoSem100k = 0 hrp.CFrame=best.PrimaryPart.CFrame+Vector3.new(0,0,2) task.wait(0.15) firetouchinterest(hrp,best.PrimaryPart,0) firetouchinterest(hrp,best.PrimaryPart,1) for _,d in pairs(best:GetDescendants()) do if d:IsA("ProximityPrompt") then fireproximityprompt(d) end end
-                else if autoHop then tempoSem100k = tempoSem100k + 0.08 if tempoSem100k > 5 then ServerHop() tempoSem100k = 0 end end end
+                if best then
+                    tempoSem100k = 0
+                    hrp.CFrame=best.PrimaryPart.CFrame+Vector3.new(0,0,2) task.wait(0.15) firetouchinterest(hrp,best.PrimaryPart,0) firetouchinterest(hrp,best.PrimaryPart,1) for _,d in pairs(best:GetDescendants()) do if d:IsA("ProximityPrompt") then fireproximityprompt(d) end end
+                else
+                    if autoHop then
+                        tempoSem100k = tempoSem100k + 0.1
+                        if tempoSem100k > 3 then
+                            ServerHop()
+                            tempoSem100k = 0
+                            task.wait(5)
+                        end
+                    end
+                end
             end
         end)
     end
 end)
-SG:SetCore("SendNotification",{Title="MIIIGUEX V23 [R]", Text="Aperta R pra ativar AUTO HOP!", Duration=5})
+
+SG:SetCore("SendNotification",{Title="MIIIGUEX V24", Text="Aperta R pra ativar AUTO HOP FORÇADO!", Duration=5})
