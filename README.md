@@ -1,4 +1,4 @@
--- MIIIGUEX V24 - R FORÇADO + ANTI-LOOP + DELTA FIX
+-- MIIIGUEX V24 CORRIGIDO - SÓ PALHAÇO 100K + NÃO TROCA QUANDO ACHA
 getgenv().MIIIGUEX_DATA = getgenv().MIIIGUEX_DATA or {autoHop=false,noclip=true,autoK=true,guiHidden=true,savedTP=nil,speed=true,tpAuto=true}
 getgenv().MIIIGUEX_DATA.guiHidden = true
 getgenv().Visitados = getgenv().Visitados or {}
@@ -11,27 +11,46 @@ local HS = game:GetService("HttpService")
 local Plots = workspace:WaitForChild("Plots")
 local SG = game.StarterGui
 
--- HOP FORÇADO QUE TROCA SIM
+local function notify(t,m,d) pcall(function() SG:SetCore("SendNotification",{Title=t, Text=m, Duration=d or 3}) end) end
+
+-- HOP ANTI-LOOP DE VERDADE
 local function ServerHop()
-    SG:SetCore("SendNotification",{Title="AUTO HOP", Text="TROCANDO DE SERVER AGORA!", Duration=2})
-    task.wait(0.2)
-    local PlaceId = game.PlaceId
+    notify("🔄 TROCANDO","SEM PALHAÇO 100K+ AQUI",2)
     table.insert(getgenv().Visitados, game.JobId)
 
-    -- JEITO 1: NORMAL (MAIS RAPIDO)
-    local ok = pcall(function() TS:Teleport(PlaceId, LP) end)
-    if ok then return end
-    task.wait(0.5)
-    -- JEITO 2: FALLBACK
-    pcall(function() TS:TeleportToPlaceInstance(PlaceId, game.JobId, LP) end)
-    task.wait(0.5)
-    pcall(function() TS:Teleport(PlaceId) end)
+    local PlaceId = game.PlaceId
+    local servers = {}
+
+    -- TENTA API PRA NÃO REPETIR
+    local ok, result = pcall(function()
+        return HS:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..PlaceId.."/servers/Public?sortOrder=Asc&limit=100"))
+    end)
+
+    if ok and result and result.data then
+        for _,s in pairs(result.data) do
+            if s.id ~= game.JobId and s.playing < s.maxPlayers then
+                local jaFoi = false
+                for _,v in pairs(getgenv().Visitados) do if v==s.id then jaFoi=true break end end
+                if not jaFoi then table.insert(servers, s.id) end
+            end
+        end
+        if #servers > 0 then
+            local escolhido = servers[math.random(1,#servers)]
+            pcall(function() TS:TeleportToPlaceInstance(PlaceId, escolhido, LP) end)
+            task.wait(0.5)
+        end
+    end
+
+    -- FALLBACK FORÇADO
+    if #getgenv().Visitados > 30 then getgenv().Visitados = {} end
+    pcall(function() TS:Teleport(PlaceId, LP) end)
 end
 
 local queueteleport = queue_on_teleport or (syn and syn.queue_on_teleport)
 if queueteleport then
     queueteleport([[
         getgenv().MIIIGUEX_DATA = {autoHop=true,noclip=true,autoK=true,guiHidden=true,savedTP=nil,speed=true,tpAuto=true}
+        getgenv().Visitados = getgenv().Visitados or {}
         wait(3)
         loadstring(game:HttpGet("https://pastebin.com/raw/SEU_LINK_AQUI"))()
     ]])
@@ -51,7 +70,7 @@ local bTP=btn("Q AUTO AO PEGAR: ON",194,Color3.fromRGB(35,85,55))
 local bSave=btn("💾 SALVAR BASE [X]",242)
 local bUse=btn("📍 USAR TP [Q]",290,Color3.fromRGB(60,60,90))
 local bAutoHop=btn("AUTO HOP [R]: "..(getgenv().MIIIGUEX_DATA.autoHop and "ON" or "OFF"),338, getgenv().MIIIGUEX_DATA.autoHop and Color3.fromRGB(35,85,55) or Color3.fromRGB(45,47,55))
-local bClose=btn("FECHAR [M]",386,Color3.fromRGB(80,40,40))
+local bClose=btn("FECHAR [M] | VISITADOS: "..#getgenv().Visitados,386,Color3.fromRGB(80,40,40))
 
 local noclip=true local autoK=true local tpAuto=true local speedOn=true local autoHop=getgenv().MIIIGUEX_DATA.autoHop or false
 local savedCFrame=getgenv().MIIIGUEX_DATA.savedTP and CFrame.new(unpack(getgenv().MIIIGUEX_DATA.savedTP)) or nil
@@ -64,18 +83,27 @@ local function toggleGUI() main.Visible=not main.Visible openBtn.Visible=not mai
 local function salvarPos() local hrp=LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") if hrp then savedCFrame=hrp.CFrame getgenv().MIIIGUEX_DATA.savedTP={savedCFrame:GetComponents()} bSave.Text="💾 X SALVO!" bSave.BackgroundColor3=Color3.fromRGB(35,85,55) end end
 local function usarPos() if savedCFrame then local hrp=LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") if hrp then hrp.CFrame=savedCFrame end end end
 
+-- CORRIGIDO: SÓ PALHAÇO 100K+
 local function temPalhaco100k()
-    local melhor, valor = nil, 0
+    local melhor, valor, dono = nil, 0, ""
     for _,plot in pairs(Plots:GetChildren()) do
         if plot:FindFirstChild("Owner") and plot.Owner.Value~=LP.Name then
             for _,m in pairs(plot:GetChildren()) do
                 if m:IsA("Model") and m.PrimaryPart and m:FindFirstChild("PricePerSecond") then
-                    if m.PricePerSecond.Value >= 100000 and m.PricePerSecond.Value > valor then valor = m.PricePerSecond.Value melhor = m end
+                    local nome = string.lower(m.Name)
+                    local ePalhaco = string.find(nome,"clown") or string.find(nome,"palhaco") or string.find(nome,"jester") or string.find(nome,"palha") or string.find(nome,"circus")
+                    if ePalhaco and m.PricePerSecond.Value >= 100000 then
+                        if m.PricePerSecond.Value > valor then
+                            valor = m.PricePerSecond.Value
+                            melhor = m
+                            dono = plot.Owner.Value
+                        end
+                    end
                 end
             end
         end
     end
-    return melhor, valor
+    return melhor, valor, dono
 end
 
 local function ativarAutoHop()
@@ -84,9 +112,9 @@ local function ativarAutoHop()
     bAutoHop.Text="AUTO HOP [R]: "..(autoHop and "ON" or "OFF")
     bAutoHop.BackgroundColor3=autoHop and Color3.fromRGB(35,85,55) or Color3.fromRGB(45,47,55)
     if autoHop then
-        SG:SetCore("SendNotification",{Title="AUTO HOP [R]", Text="ATIVADO! Vai trocar em 3s se não achar 100K+", Duration=3})
+        notify("🤡 AUTO HOP","ON - Só palhaço 100K+",3)
     else
-        SG:SetCore("SendNotification",{Title="AUTO HOP [R]", Text="Desligado", Duration=2})
+        notify("AUTO HOP","Desligado",2)
     end
 end
 
@@ -96,7 +124,7 @@ bKitar.MouseButton1Click:Connect(function() autoK=not autoK bKitar.Text=autoK an
 bTP.MouseButton1Click:Connect(function() tpAuto=not tpAuto bTP.Text=tpAuto and "Q AUTO AO PEGAR: ON" or "Q AUTO AO PEGAR: OFF" bTP.BackgroundColor3=tpAuto and Color3.fromRGB(35,85,55) or Color3.fromRGB(45,47,55) end)
 bSave.MouseButton1Click:Connect(salvarPos) bUse.MouseButton1Click:Connect(usarPos)
 bAutoHop.MouseButton1Click:Connect(ativarAutoHop)
-bClose.MouseButton1Click:Connect(toggleGUI) openBtn.MouseButton1Click:Connect(toggleGUI)
+bClose.MouseButton1Click:Connect(function() if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then getgenv().Visitados={} bClose.Text="FECHAR [M] | VISITADOS: 0" notify("LIMPO","Lista limpa!",2) else toggleGUI() end end) openBtn.MouseButton1Click:Connect(toggleGUI)
 
 UIS.InputBegan:Connect(function(i,gp)
     if gp then return end
@@ -104,6 +132,7 @@ UIS.InputBegan:Connect(function(i,gp)
     elseif i.KeyCode==Enum.KeyCode.R then ativarAutoHop()
     elseif i.KeyCode==Enum.KeyCode.X then salvarPos()
     elseif i.KeyCode==Enum.KeyCode.Q then usarPos()
+    elseif i.KeyCode==Enum.KeyCode.L then getgenv().Visitados={} bClose.Text="FECHAR [M] | VISITADOS: 0" notify("LIMPO","Visitados zerado",2)
     elseif i.KeyCode==Enum.KeyCode.K and autoK then
         pcall(function() local t=LP.Character:FindFirstChildWhichIsA("Tool") if t then local n=string.lower(t.Name) if not (string.find(n,"cloak") or string.find(n,"invis") or string.find(n,"cape") or string.find(n,"ghost")) then t.Parent=LP.Backpack end end end)
     end
@@ -120,21 +149,28 @@ end)
 
 task.spawn(function()
     local tempoSem100k = 0
-    while true do task.wait(0.1)
+    while true do task.wait(0.15)
         pcall(function()
             local char=LP.Character if not char then return end local hrp=char:FindFirstChild("HumanoidRootPart") if not hrp then return end
             local tool=char:FindFirstChildWhichIsA("Tool")
             if tool then
                 local n=string.lower(tool.Name) if string.find(n,"cloak") or string.find(n,"invis") or string.find(n,"cape") or string.find(n,"ghost") then return end
-                if tpAuto and savedCFrame then hrp.CFrame=savedCFrame task.wait(0.35) local t=char:FindFirstChildWhichIsA("Tool") if t then local nn=string.lower(t.Name) if not (string.find(nn,"cloak") or string.find(nn,"invis") or string.find(nn,"cape") or string.find(nn,"ghost")) then t.Parent=LP.Backpack end end end
+                if tpAuto and savedCFrame then hrp.CFrame=savedCFrame task.wait(0.35) local t=char:FindFirstChildWhichIsA("Tool") if t then local nn=string.lower(t.Name) if not (string.find(nn,"cloak") or string.find(nn,"invis") or string.find(nn,"cape") or string.find(nn,"ghost")) then t.Parent=LP.Backpack notify("🤡 ROUBOU!","$"..(tempoSem100k).." palhaço na base",2) end end end
             else
-                local best,val = temPalhaco100k()
+                local best,val,dono = temPalhaco100k()
                 if best then
+                    -- ACHOU PALHAÇO -> NÃO TROCA
                     tempoSem100k = 0
+                    bAutoHop.Text="🤡 ACHOU! $"..val.." | "..dono
+                    bAutoHop.BackgroundColor3=Color3.fromRGB(255,200,0)
                     hrp.CFrame=best.PrimaryPart.CFrame+Vector3.new(0,0,2) task.wait(0.15) firetouchinterest(hrp,best.PrimaryPart,0) firetouchinterest(hrp,best.PrimaryPart,1) for _,d in pairs(best:GetDescendants()) do if d:IsA("ProximityPrompt") then fireproximityprompt(d) end end
                 else
+                    -- NÃO ACHOU
+                    bAutoHop.Text="AUTO HOP [R]: "..(autoHop and "ON ("..math.floor(tempoSem100k).."s)" or "OFF").." | V:"..#getgenv().Visitados
+                    bAutoHop.BackgroundColor3=autoHop and Color3.fromRGB(35,85,55) or Color3.fromRGB(45,47,55)
+                    bClose.Text="FECHAR [M] | VISITADOS: "..#getgenv().Visitados
                     if autoHop then
-                        tempoSem100k = tempoSem100k + 0.1
+                        tempoSem100k = tempoSem100k + 0.15
                         if tempoSem100k > 3 then
                             ServerHop()
                             tempoSem100k = 0
@@ -147,4 +183,4 @@ task.spawn(function()
     end
 end)
 
-SG:SetCore("SendNotification",{Title="MIIIGUEX V24", Text="Aperta R pra ativar AUTO HOP FORÇADO!", Duration=5})
+notify("MIIIGUEX V24 FIX","🤡 Só palhaço 100K+ | R liga hop | L limpa lista",5)
