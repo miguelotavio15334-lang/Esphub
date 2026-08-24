@@ -1,24 +1,46 @@
--- MIIIGUEX V21 - AUTO HOP 100K+ + AVISO + AUTOEXEC + SEM TATU
+-- MIIIGUEX V23 - R ATIVA AUTO HOP + ANTI-LOOP + FIX DELTA
 getgenv().MIIIGUEX_DATA = getgenv().MIIIGUEX_DATA or {autoHop=false,noclip=true,autoK=true,guiHidden=true,savedTP=nil,speed=true,tpAuto=true}
 getgenv().MIIIGUEX_DATA.guiHidden = true
-getgenv().MIIIGUEX_DATA.noclip = true
-getgenv().MIIIGUEX_DATA.speed = true
-getgenv().MIIIGUEX_DATA.autoK = true
-getgenv().MIIIGUEX_DATA.tpAuto = true
+getgenv().Visitados = getgenv().Visitados or {}
 
 local LP = game.Players.LocalPlayer
 local TS = game:GetService("TeleportService")
 local RS = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
+local HS = game:GetService("HttpService")
 local Plots = workspace:WaitForChild("Plots")
 local SG = game.StarterGui
 
--- AUTO EXECUTAR AO ENTRAR / DAR HOP
+-- FUNÇÃO HOP ANTI-LOOP QUE NÃO VOLTA NO MESMO SERVER
+local function ServerHop()
+    SG:SetCore("SendNotification",{Title="AUTO HOP", Text="Trocando de servidor...", Duration=3})
+    local PlaceId = game.PlaceId
+    table.insert(getgenv().Visitados, game.JobId)
+    if #getgenv().Visitados > 50 then table.remove(getgenv().Visitados, 1) end
+
+    local url = "https://games.roblox.com/v1/games/"..PlaceId.."/servers/Public?sortOrder=Desc&limit=100"
+    local success, result = pcall(function() return HS:JSONDecode(game:HttpGet(url)) end)
+    if success and result and result.data then
+        local servers = result.data
+        -- embaralha
+        for i = #servers, 2, -1 do local j = math.random(i) servers[i], servers[j] = servers[j], servers[i] end
+        for _, server in pairs(servers) do
+            local jaVisitado = false
+            for _, v in pairs(getgenv().Visitados) do if v == server.id then jaVisitado = true break end end
+            if not jaVisitado and server.playing < server.maxPlayers and server.id ~= game.JobId then
+                pcall(function() TS:TeleportToPlaceInstance(PlaceId, server.id, LP) end)
+                return
+            end
+        end
+    end
+    TS:Teleport(PlaceId, LP)
+end
+
 local queueteleport = queue_on_teleport or (syn and syn.queue_on_teleport)
 if queueteleport then
     queueteleport([[
+        getgenv().MIIIGUEX_DATA = {autoHop=true,noclip=true,autoK=true,guiHidden=true,savedTP=nil,speed=true,tpAuto=true}
         wait(4)
-        getgenv().MIIIGUEX_DATA = getgenv().MIIIGUEX_DATA or {autoHop=true,noclip=true,autoK=true,guiHidden=true,savedTP=nil,speed=true,tpAuto=true}
         loadstring(game:HttpGet("https://pastebin.com/raw/SEU_LINK_AQUI"))()
     ]])
 end
@@ -36,7 +58,7 @@ local bKitar=btn("Auto Kitar [K]: ON",146,Color3.fromRGB(35,85,55))
 local bTP=btn("Q AUTO AO PEGAR: ON",194,Color3.fromRGB(35,85,55))
 local bSave=btn("💾 SALVAR BASE [X]",242)
 local bUse=btn("📍 USAR TP [Q]",290,Color3.fromRGB(60,60,90))
-local bAutoHop=btn("AUTO HOP 100K+: "..(getgenv().MIIIGUEX_DATA.autoHop and "ON" or "OFF"),338, getgenv().MIIIGUEX_DATA.autoHop and Color3.fromRGB(35,85,55) or Color3.fromRGB(45,47,55))
+local bAutoHop=btn("AUTO HOP 100K+ [R]: "..(getgenv().MIIIGUEX_DATA.autoHop and "ON" or "OFF"),338, getgenv().MIIIGUEX_DATA.autoHop and Color3.fromRGB(35,85,55) or Color3.fromRGB(45,47,55))
 local bClose=btn("FECHAR [M]",386,Color3.fromRGB(80,40,40))
 
 local noclip=true local autoK=true local tpAuto=true local speedOn=true local autoHop=getgenv().MIIIGUEX_DATA.autoHop or false
@@ -50,17 +72,13 @@ local function toggleGUI() main.Visible=not main.Visible openBtn.Visible=not mai
 local function salvarPos() local hrp=LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") if hrp then savedCFrame=hrp.CFrame getgenv().MIIIGUEX_DATA.savedTP={savedCFrame:GetComponents()} bSave.Text="💾 X SALVO!" bSave.BackgroundColor3=Color3.fromRGB(35,85,55) end end
 local function usarPos() if savedCFrame then local hrp=LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") if hrp then hrp.CFrame=savedCFrame end end end
 
--- FUNÇÃO QUE VERIFICA SE TEM 100K+ E AVISA
 local function temPalhaco100k()
     local melhor, valor = nil, 0
     for _,plot in pairs(Plots:GetChildren()) do
         if plot:FindFirstChild("Owner") and plot.Owner.Value~=LP.Name then
             for _,m in pairs(plot:GetChildren()) do
                 if m:IsA("Model") and m.PrimaryPart and m:FindFirstChild("PricePerSecond") then
-                    if m.PricePerSecond.Value >= 100000 and m.PricePerSecond.Value > valor then
-                        valor = m.PricePerSecond.Value
-                        melhor = m
-                    end
+                    if m.PricePerSecond.Value >= 100000 and m.PricePerSecond.Value > valor then valor = m.PricePerSecond.Value melhor = m end
                 end
             end
         end
@@ -68,52 +86,57 @@ local function temPalhaco100k()
     return melhor, valor
 end
 
+local function ativarAutoHop()
+    autoHop = not autoHop
+    getgenv().MIIIGUEX_DATA.autoHop = autoHop
+    bAutoHop.Text="AUTO HOP 100K+ [R]: "..(autoHop and "ON" or "OFF")
+    bAutoHop.BackgroundColor3=autoHop and Color3.fromRGB(35,85,55) or Color3.fromRGB(45,47,55)
+    if autoHop then
+        SG:SetCore("SendNotification",{Title="AUTO HOP [R]", Text="Ligado! Procurando 100K+...", Duration=3})
+        local best,val = temPalhaco100k()
+        if best then
+            SG:SetCore("SendNotification",{Title="💰 ACHOU 100K+!", Text=best.Name.." - $"..val.."/s", Duration=5})
+        else
+            task.wait(1)
+            ServerHop()
+        end
+    else
+        SG:SetCore("SendNotification",{Title="AUTO HOP [R]", Text="Desligado", Duration=2})
+    end
+end
+
 bSpeed.MouseButton1Click:Connect(function() speedOn=not speedOn getgenv().MIIIGUEX_DATA.speed=speedOn bSpeed.Text=speedOn and "SPEED 150: ON" or "SPEED 16: OFF" bSpeed.BackgroundColor3=speedOn and Color3.fromRGB(35,85,55) or Color3.fromRGB(45,47,55) end)
 bNo.MouseButton1Click:Connect(function() noclip=not noclip bNo.Text=noclip and "NoClip: ON" or "NoClip: OFF" bNo.BackgroundColor3=noclip and Color3.fromRGB(35,85,55) or Color3.fromRGB(45,47,55) end)
 bKitar.MouseButton1Click:Connect(function() autoK=not autoK bKitar.Text=autoK and "Auto Kitar [K]: ON" or "Auto Kitar [K]: OFF" bKitar.BackgroundColor3=autoK and Color3.fromRGB(35,85,55) or Color3.fromRGB(45,47,55) end)
 bTP.MouseButton1Click:Connect(function() tpAuto=not tpAuto bTP.Text=tpAuto and "Q AUTO AO PEGAR: ON" or "Q AUTO AO PEGAR: OFF" bTP.BackgroundColor3=tpAuto and Color3.fromRGB(35,85,55) or Color3.fromRGB(45,47,55) end)
 bSave.MouseButton1Click:Connect(salvarPos) bUse.MouseButton1Click:Connect(usarPos)
-bAutoHop.MouseButton1Click:Connect(function() autoHop=not autoHop getgenv().MIIIGUEX_DATA.autoHop=autoHop bAutoHop.Text="AUTO HOP 100K+: "..(autoHop and "ON" or "OFF") bAutoHop.BackgroundColor3=autoHop and Color3.fromRGB(35,85,55) or Color3.fromRGB(45,47,55) SG:SetCore("SendNotification",{Title="AUTO HOP", Text=autoHop and "Ligado! Vai trocar se não tiver 100K+" or "Desligado", Duration=3}) end)
+bAutoHop.MouseButton1Click:Connect(ativarAutoHop)
 bClose.MouseButton1Click:Connect(toggleGUI) openBtn.MouseButton1Click:Connect(toggleGUI)
 
+-- TECLAS R, M, X, Q, K
 UIS.InputBegan:Connect(function(i,gp)
     if gp then return end
     if i.KeyCode==Enum.KeyCode.M then toggleGUI()
+    elseif i.KeyCode==Enum.KeyCode.R then ativarAutoHop() -- R ATIVA O HOP
     elseif i.KeyCode==Enum.KeyCode.X then salvarPos()
     elseif i.KeyCode==Enum.KeyCode.Q then usarPos()
     elseif i.KeyCode==Enum.KeyCode.K and autoK then
-        pcall(function()
-            local t=LP.Character:FindFirstChildWhichIsA("Tool")
-            if t then local n=string.lower(t.Name) if not (string.find(n,"cloak") or string.find(n,"invis") or string.find(n,"cape") or string.find(n,"ghost")) then t.Parent=LP.Backpack end end
-        end)
+        pcall(function() local t=LP.Character:FindFirstChildWhichIsA("Tool") if t then local n=string.lower(t.Name) if not (string.find(n,"cloak") or string.find(n,"invis") or string.find(n,"cape") or string.find(n,"ghost")) then t.Parent=LP.Backpack end end end)
     end
 end)
 
-RS.Stepped:Connect(function()
-    pcall(function()
-        local char = LP.Character if not char then return end
-        if noclip then for _,v in pairs(char:GetDescendants()) do if v:IsA("BasePart") then v.CanCollide=false end end end
-        if speedOn then local hum=char:FindFirstChildOfClass("Humanoid") if hum and hum.WalkSpeed~=150 then hum.WalkSpeed=150 end end
-    end)
-end)
+RS.Stepped:Connect(function() pcall(function() local char = LP.Character if not char then return end if noclip then for _,v in pairs(char:GetDescendants()) do if v:IsA("BasePart") then v.CanCollide=false end end end if speedOn then local hum=char:FindFirstChildOfClass("Humanoid") if hum and hum.WalkSpeed~=150 then hum.WalkSpeed=150 end end end) end)
 
--- INICIO + AVISO
 task.spawn(function()
     task.wait(4)
     if getgenv().MIIIGUEX_DATA.savedTP then savedCFrame=CFrame.new(unpack(getgenv().MIIIGUEX_DATA.savedTP)) local hrp=LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") if hrp then hrp.CFrame=savedCFrame end
     else local basePos=getBase() if basePos then savedCFrame=CFrame.new(basePos) getgenv().MIIIGUEX_DATA.savedTP={savedCFrame:GetComponents()} bSave.Text="💾 X AUTO: BASE SALVA" bSave.BackgroundColor3=Color3.fromRGB(35,85,55) end end
     pcall(function() LP.Character.Humanoid.WalkSpeed=150 end)
-
-    -- AVISA SE TEM 100K+
     local best, val = temPalhaco100k()
-    if best then
-        SG:SetCore("SendNotification",{Title="💰 ACHOU 100K+!", Text=best.Name.." - $"..val.."/s", Duration=5})
-    else
-        if autoHop then SG:SetCore("SendNotification",{Title="AUTO HOP", Text="Nenhum 100K+ aqui, trocando de server em 5s...", Duration=4}) end
-    end
+    if best then SG:SetCore("SendNotification",{Title="💰 ACHOU 100K+!", Text=best.Name.." - $"..val.."/s", Duration=5})
+    else if autoHop then SG:SetCore("SendNotification",{Title="AUTO HOP [R]", Text="Sem 100K+, trocando em 5s...", Duration=4}) end end
 end)
 
--- LOOP PRINCIPAL + AUTO HOP
 task.spawn(function()
     local tempoSem100k = 0
     while true do task.wait(0.08)
@@ -125,24 +148,10 @@ task.spawn(function()
                 if tpAuto and savedCFrame then hrp.CFrame=savedCFrame task.wait(0.35) local t=char:FindFirstChildWhichIsA("Tool") if t then local nn=string.lower(t.Name) if not (string.find(nn,"cloak") or string.find(nn,"invis") or string.find(nn,"cape") or string.find(nn,"ghost")) then t.Parent=LP.Backpack end end end
             else
                 local best,val = temPalhaco100k()
-                if best then
-                    tempoSem100k = 0
-                    hrp.CFrame=best.PrimaryPart.CFrame+Vector3.new(0,0,2) task.wait(0.15) firetouchinterest(hrp,best.PrimaryPart,0) firetouchinterest(hrp,best.PrimaryPart,1) for _,d in pairs(best:GetDescendants()) do if d:IsA("ProximityPrompt") then fireproximityprompt(d) end end
-                else
-                    -- SEM 100K+ AVISA E HOPA SE AUTO HOP LIGADO
-                    if autoHop then
-                        tempoSem100k = tempoSem100k + 0.08
-                        if tempoSem100k > 5 then -- 5 segundos sem nada
-                            SG:SetCore("SendNotification",{Title="AUTO HOP", Text="Sem 100K+, indo pro próximo server!", Duration=3})
-                            task.wait(0.5)
-                            TS:Teleport(game.PlaceId, LP)
-                            tempoSem100k = 0
-                        end
-                    end
-                end
+                if best then tempoSem100k = 0 hrp.CFrame=best.PrimaryPart.CFrame+Vector3.new(0,0,2) task.wait(0.15) firetouchinterest(hrp,best.PrimaryPart,0) firetouchinterest(hrp,best.PrimaryPart,1) for _,d in pairs(best:GetDescendants()) do if d:IsA("ProximityPrompt") then fireproximityprompt(d) end end
+                else if autoHop then tempoSem100k = tempoSem100k + 0.08 if tempoSem100k > 5 then ServerHop() tempoSem100k = 0 end end end
             end
         end)
     end
 end)
-
-SG:SetCore("SendNotification",{Title="MIIIGUEX V21", Text="AUTO HOP 100K+ | AUTOEXEC | AVISO", Duration=5})
+SG:SetCore("SendNotification",{Title="MIIIGUEX V23 [R]", Text="Aperta R pra ativar AUTO HOP!", Duration=5})
