@@ -1,4 +1,4 @@
--- MIIIGUEX V24 RED + R OFF + KITAR [E] + SÓ PALHAÇO 100K
+-- MIIIGUEX V26 - P TP PALHAÇO 100K+ | RED | R OFF | E KITAR
 getgenv().MIIIGUEX_DATA = {autoHop=false,noclip=true,autoK=true,guiHidden=true,savedTP=nil,speed=true,tpAuto=true}
 getgenv().Visitados = getgenv().Visitados or {}
 
@@ -13,7 +13,7 @@ local SG = game.StarterGui
 local function notify(t,m,d) pcall(function() SG:SetCore("SendNotification",{Title=t, Text=m, Duration=d or 3}) end) end
 
 local function ServerHop()
-    notify("🔄 TROCANDO","SEM PALHAÇO 100K+ AQUI",2)
+    notify("🔄 PROCURANDO","BUSCANDO SERVER COM PALHAÇO 100K+",2)
     table.insert(getgenv().Visitados, game.JobId)
     local PlaceId = game.PlaceId
     local servers = {}
@@ -34,7 +34,7 @@ local function ServerHop()
             task.wait(0.5)
         end
     end
-    if #getgenv().Visitados > 30 then getgenv().Visitados = {} end
+    if #getgenv().Visitados > 35 then getgenv().Visitados = {} end
     pcall(function() TS:Teleport(PlaceId, LP) end)
 end
 
@@ -50,7 +50,7 @@ end
 
 pcall(function() LP.PlayerGui:FindFirstChild("MIIIGUEX_HUB"):Destroy() end)
 local gui = Instance.new("ScreenGui", LP.PlayerGui) gui.Name = "MIIIGUEX_HUB" gui.ResetOnSpawn = false
-local main = Instance.new("Frame", gui) main.Size = UDim2.new(0,380,0,620) main.Position = UDim2.new(0.5,-190,0.5,-310) main.BackgroundColor3 = Color3.fromRGB(120,15,15) main.Active=true main.Draggable=true Instance.new("UICorner", main).CornerRadius = UDim.new(0,18)
+local main = Instance.new("Frame", gui) main.Size = UDim2.new(0,380,0,650) main.Position = UDim2.new(0.5,-190,0.5,-325) main.BackgroundColor3 = Color3.fromRGB(120,15,15) main.Active=true main.Draggable=true Instance.new("UICorner", main).CornerRadius = UDim.new(0,18)
 local stroke = Instance.new("UIStroke", main) stroke.Color = Color3.fromRGB(255,0,0) stroke.Thickness = 2
 local openBtn = Instance.new("TextButton", gui) openBtn.Size=UDim2.new(0,60,0,60) openBtn.Position=UDim2.new(0,15,0.5,-30) openBtn.Text="M" openBtn.Visible=true openBtn.BackgroundColor3=Color3.fromRGB(120,15,15) openBtn.TextColor3=Color3.new(1,1,1) openBtn.Font=Enum.Font.GothamBold openBtn.TextSize=24 Instance.new("UICorner", openBtn).CornerRadius=UDim.new(0,30) local stroke2 = Instance.new("UIStroke", openBtn) stroke2.Thickness=2 stroke2.Color=Color3.fromRGB(255,0,0)
 
@@ -62,8 +62,9 @@ local bKitar=btn("Auto Kitar [E]: ON",146,Color3.fromRGB(35,85,55))
 local bTP=btn("Q AUTO AO PEGAR: ON",194,Color3.fromRGB(35,85,55))
 local bSave=btn("💾 SALVAR BASE [X]",242)
 local bUse=btn("📍 USAR TP [Q]",290,Color3.fromRGB(60,20,20))
-local bAutoHop=btn("AUTO HOP [R]: OFF",338, Color3.fromRGB(45,47,55))
-local bClose=btn("FECHAR [M] | VISITADOS: "..#getgenv().Visitados,386,Color3.fromRGB(80,20,20))
+local bPalhaco=btn("🤡 TP PALHAÇO [P]",338,Color3.fromRGB(120,30,30))
+local bAutoHop=btn("AUTO HOP [R]: OFF",386, Color3.fromRGB(45,47,55))
+local bClose=btn("FECHAR [M] | VISITADOS: "..#getgenv().Visitados,434,Color3.fromRGB(80,20,20))
 
 local noclip=true local autoK=true local tpAuto=true local speedOn=true local autoHop=false
 local savedCFrame=nil
@@ -97,11 +98,21 @@ local function temPalhaco100k()
     return melhor, valor, dono
 end
 
+local function tpPalhaco()
+    local best,val,dono = temPalhaco100k()
+    if best then
+        local hrp=LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then hrp.CFrame=best.PrimaryPart.CFrame+Vector3.new(0,0,3) notify("🤡 TP [P]","$"..val.." | "..dono,2) end
+    else
+        notify("🤡 SEM PALHAÇO","Nenhum 100K+ aqui",2)
+    end
+end
+
 local function ativarAutoHop()
     autoHop = not autoHop
-    bAutoHop.Text="AUTO HOP [R]: "..(autoHop and "ON" or "OFF")
+    bAutoHop.Text="AUTO HOP [R]: "..(autoHop and "ON - CAÇANDO 100K+" or "OFF")
     bAutoHop.BackgroundColor3=autoHop and Color3.fromRGB(35,85,55) or Color3.fromRGB(45,47,55)
-    if autoHop then notify("🤡 AUTO HOP","ON - Só palhaço 100K+",3) else notify("AUTO HOP","OFF",2) end
+    if autoHop then notify("🤡 CAÇADOR","Procurando só palhaço 100K+",3) else notify("AUTO HOP","OFF",2) end
 end
 
 bSpeed.MouseButton1Click:Connect(function() speedOn=not speedOn bSpeed.Text=speedOn and "SPEED 150: ON" or "SPEED 16: OFF" bSpeed.BackgroundColor3=speedOn and Color3.fromRGB(35,85,55) or Color3.fromRGB(45,47,55) end)
@@ -109,6 +120,7 @@ bNo.MouseButton1Click:Connect(function() noclip=not noclip bNo.Text=noclip and "
 bKitar.MouseButton1Click:Connect(function() autoK=not autoK bKitar.Text=autoK and "Auto Kitar [E]: ON" or "Auto Kitar [E]: OFF" bKitar.BackgroundColor3=autoK and Color3.fromRGB(35,85,55) or Color3.fromRGB(45,47,55) end)
 bTP.MouseButton1Click:Connect(function() tpAuto=not tpAuto bTP.Text=tpAuto and "Q AUTO AO PEGAR: ON" or "Q AUTO AO PEGAR: OFF" bTP.BackgroundColor3=tpAuto and Color3.fromRGB(35,85,55) or Color3.fromRGB(45,47,55) end)
 bSave.MouseButton1Click:Connect(salvarPos) bUse.MouseButton1Click:Connect(usarPos)
+bPalhaco.MouseButton1Click:Connect(tpPalhaco)
 bAutoHop.MouseButton1Click:Connect(ativarAutoHop)
 bClose.MouseButton1Click:Connect(function() if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then getgenv().Visitados={} bClose.Text="FECHAR [M] | VISITADOS: 0" notify("LIMPO","Lista limpa!",2) else toggleGUI() end end) openBtn.MouseButton1Click:Connect(toggleGUI)
 
@@ -116,6 +128,7 @@ UIS.InputBegan:Connect(function(i,gp)
     if gp then return end
     if i.KeyCode==Enum.KeyCode.M then toggleGUI()
     elseif i.KeyCode==Enum.KeyCode.R then ativarAutoHop()
+    elseif i.KeyCode==Enum.KeyCode.P then tpPalhaco()
     elseif i.KeyCode==Enum.KeyCode.X then salvarPos()
     elseif i.KeyCode==Enum.KeyCode.Q then usarPos()
     elseif i.KeyCode==Enum.KeyCode.L then getgenv().Visitados={} bClose.Text="FECHAR [M] | VISITADOS: 0" notify("LIMPO","Visitados zerado",2)
@@ -145,21 +158,19 @@ task.spawn(function()
                 local best,val,dono = temPalhaco100k()
                 if best then
                     tempoSem100k = 0
-                    bAutoHop.Text="🤡 ACHOU! $"..val.." | "..dono
+                    bAutoHop.Text="🤡 TRAVADO! $"..val.." | "..dono
                     bAutoHop.BackgroundColor3=Color3.fromRGB(255,200,0)
                     hrp.CFrame=best.PrimaryPart.CFrame+Vector3.new(0,0,2) task.wait(0.15) firetouchinterest(hrp,best.PrimaryPart,0) firetouchinterest(hrp,best.PrimaryPart,1) for _,d in pairs(best:GetDescendants()) do if d:IsA("ProximityPrompt") then fireproximityprompt(d) end end
                 else
-                    bAutoHop.Text="AUTO HOP [R]: "..(autoHop and "ON ("..math.floor(tempoSem100k).."s)" or "OFF").." | V:"..#getgenv().Visitados
                     if autoHop then
-                        bAutoHop.BackgroundColor3=Color3.fromRGB(35,85,55)
                         tempoSem100k = tempoSem100k + 0.15
-                        if tempoSem100k > 3 then
-                            ServerHop()
-                            tempoSem100k = 0
-                            task.wait(5)
-                        end
+                        bAutoHop.Text="🔍 PROCURANDO 100K+ ("..string.format("%.1f",tempoSem100k).."s) V:"..#getgenv().Visitados
+                        bAutoHop.BackgroundColor3=Color3.fromRGB(255,50,50)
+                        if tempoSem100k > 2 then ServerHop() tempoSem100k = 0 task.wait(3) end
                     else
+                        bAutoHop.Text="AUTO HOP [R]: OFF"
                         bAutoHop.BackgroundColor3=Color3.fromRGB(45,47,55)
+                        tempoSem100k = 0
                     end
                     bClose.Text="FECHAR [M] | VISITADOS: "..#getgenv().Visitados
                 end
@@ -168,4 +179,4 @@ task.spawn(function()
     end
 end)
 
-notify("MIIIGUEX V24 RED","E kitar | R OFF | Fundo RED",5)
+notify("MIIIGUEX V26","P = TP PALHAÇO 100K+ | E kitar | R caça",5)
