@@ -1,4 +1,4 @@
--- MIIIGUEX V26 - P TP PALHAÇO 100K+ | RED | R OFF | E KITAR
+-- MIIIGUEX V26 - LISTA 75K+ 93.7K 150K 175K 200K 225K 400K 500K 600K | P TP | R OFF | RED
 getgenv().MIIIGUEX_DATA = {autoHop=false,noclip=true,autoK=true,guiHidden=true,savedTP=nil,speed=true,tpAuto=true}
 getgenv().Visitados = getgenv().Visitados or {}
 
@@ -13,7 +13,7 @@ local SG = game.StarterGui
 local function notify(t,m,d) pcall(function() SG:SetCore("SendNotification",{Title=t, Text=m, Duration=d or 3}) end) end
 
 local function ServerHop()
-    notify("🔄 PROCURANDO","BUSCANDO SERVER COM PALHAÇO 100K+",2)
+    notify("🔄 PROCURANDO","BUSCANDO PALHAÇO 75K+",2)
     table.insert(getgenv().Visitados, game.JobId)
     local PlaceId = game.PlaceId
     local servers = {}
@@ -62,7 +62,7 @@ local bKitar=btn("Auto Kitar [E]: ON",146,Color3.fromRGB(35,85,55))
 local bTP=btn("Q AUTO AO PEGAR: ON",194,Color3.fromRGB(35,85,55))
 local bSave=btn("💾 SALVAR BASE [X]",242)
 local bUse=btn("📍 USAR TP [Q]",290,Color3.fromRGB(60,20,20))
-local bPalhaco=btn("🤡 TP PALHAÇO [P]",338,Color3.fromRGB(120,30,30))
+local bPalhaco=btn("🤡 TP PALHAÇO [P] 75K+",338,Color3.fromRGB(120,30,30))
 local bAutoHop=btn("AUTO HOP [R]: OFF",386, Color3.fromRGB(45,47,55))
 local bClose=btn("FECHAR [M] | VISITADOS: "..#getgenv().Visitados,434,Color3.fromRGB(80,20,20))
 
@@ -84,11 +84,15 @@ local function temPalhaco100k()
                 if m:IsA("Model") and m.PrimaryPart and m:FindFirstChild("PricePerSecond") then
                     local nome = string.lower(m.Name)
                     local ePalhaco = string.find(nome,"clown") or string.find(nome,"palhaco") or string.find(nome,"jester") or string.find(nome,"palha") or string.find(nome,"circus")
-                    if ePalhaco and m.PricePerSecond.Value >= 100000 then
-                        if m.PricePerSecond.Value > valor then
-                            valor = m.PricePerSecond.Value
-                            melhor = m
-                            dono = plot.Owner.Value
+                    if ePalhaco then
+                        local v = m.PricePerSecond.Value
+                        -- LISTA QUE TU QUER: 75K 93.7K 150K 175K 200K 225K 400K 500K 600K
+                        if v >= 73000 then
+                            if v > valor then
+                                valor = v
+                                melhor = m
+                                dono = plot.Owner.Value
+                            end
                         end
                     end
                 end
@@ -104,15 +108,15 @@ local function tpPalhaco()
         local hrp=LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
         if hrp then hrp.CFrame=best.PrimaryPart.CFrame+Vector3.new(0,0,3) notify("🤡 TP [P]","$"..val.." | "..dono,2) end
     else
-        notify("🤡 SEM PALHAÇO","Nenhum 100K+ aqui",2)
+        notify("🤡 SEM PALHAÇO","Nenhum 75K+ aqui",2)
     end
 end
 
 local function ativarAutoHop()
     autoHop = not autoHop
-    bAutoHop.Text="AUTO HOP [R]: "..(autoHop and "ON - CAÇANDO 100K+" or "OFF")
+    bAutoHop.Text="AUTO HOP [R]: "..(autoHop and "ON - CAÇANDO 75K+" or "OFF")
     bAutoHop.BackgroundColor3=autoHop and Color3.fromRGB(35,85,55) or Color3.fromRGB(45,47,55)
-    if autoHop then notify("🤡 CAÇADOR","Procurando só palhaço 100K+",3) else notify("AUTO HOP","OFF",2) end
+    if autoHop then notify("🤡 CAÇADOR","Procurando palhaço 75K+",3) else notify("AUTO HOP","OFF",2) end
 end
 
 bSpeed.MouseButton1Click:Connect(function() speedOn=not speedOn bSpeed.Text=speedOn and "SPEED 150: ON" or "SPEED 16: OFF" bSpeed.BackgroundColor3=speedOn and Color3.fromRGB(35,85,55) or Color3.fromRGB(45,47,55) end)
@@ -164,7 +168,7 @@ task.spawn(function()
                 else
                     if autoHop then
                         tempoSem100k = tempoSem100k + 0.15
-                        bAutoHop.Text="🔍 PROCURANDO 100K+ ("..string.format("%.1f",tempoSem100k).."s) V:"..#getgenv().Visitados
+                        bAutoHop.Text="🔍 PROCURANDO 75K+ ("..string.format("%.1f",tempoSem100k).."s) V:"..#getgenv().Visitados
                         bAutoHop.BackgroundColor3=Color3.fromRGB(255,50,50)
                         if tempoSem100k > 2 then ServerHop() tempoSem100k = 0 task.wait(3) end
                     else
@@ -179,4 +183,4 @@ task.spawn(function()
     end
 end)
 
-notify("MIIIGUEX V26","P = TP PALHAÇO 100K+ | E kitar | R caça",5)
+notify("MIIIGUEX V26","75K 93.7K 150K 175K 200K 225K 400K 500K 600K | P TP | E kitar",5)
