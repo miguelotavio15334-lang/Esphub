@@ -1,0 +1,62 @@
+-- SISTEMA PRO AUTO-TUNE VISUAL - PARA SEU PRÓPRIO JOGO
+-- Coloque em ServerScriptService
+
+local Players = game:GetService("Players")
+
+-- Aqui você define o que é "melhor" pra cada categoria
+-- Exemplo: menor peso é melhor, maior potência é melhor
+local function getMelhorPeca(pecasCompradas)
+    local melhor = nil
+    local melhorScore = -9999
+
+    for _, peca in pairs(pecasCompradas) do
+        -- Score = Potencia - Peso (você pode mudar a lógica)
+        -- Supondo que cada peça tem atributos Potencia e Peso
+        local potencia = peca:GetAttribute("Potencia") or 0
+        local peso = peca:GetAttribute("Peso") or 0
+        local score = potencia - peso
+
+        if score > melhorScore then
+            melhorScore = score
+            melhor = peca
+        end
+    end
+
+    return melhor
+end
+
+local function equiparMelhor(player)
+    local inventario = player:FindFirstChild("InventarioComprado")
+    if not inventario then return end
+
+    print("PRO ATIVADO: Escaneando peças de ".. player.Name)
+
+    -- Agrupa por categoria (Motor, Turbo, Roda, etc)
+    local porCategoria = {}
+    for _, peca in pairs(inventario:GetChildren()) do
+        local cat = peca:GetAttribute("Categoria") or "Geral"
+        porCategoria[cat] = porCategoria[cat] or {}
+        table.insert(porCategoria[cat], peca)
+    end
+
+    -- Equipa a melhor de cada categoria
+    for categoria, lista in pairs(porCategoria) do
+        local melhor = getMelhorPeca(lista)
+        if melhor then
+            print("-> Melhor em ".. categoria.. ": ".. melhor.Name)
+            -- Aqui você equipa visualmente no carro
+            -- Ex: player.CarroAtual.Motor.Value = melhor
+        end
+    end
+end
+
+-- Quando ativar o PRO
+Players.PlayerAdded:Connect(function(player)
+    local inventario = Instance.new("Folder")
+    inventario.Name = "InventarioComprado"
+    inventario.Parent = player
+
+    -- Exemplo: Se comprar peça nova, já atualiza
+    inventario.ChildAdded:Connect(function()
+        -- Verifica se PRO está ativo
+        if
