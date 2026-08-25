@@ -1,42 +1,122 @@
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local config = require(game.ReplicatedStorage:WaitForChild("FILTEK_Config"))
+local player = game.Players.LocalPlayer
+local gui = Instance.new("ScreenGui")
+gui.Name = "TurboGrillPanel"
+gui.Parent = player:WaitForChild("PlayerGui")
 
--- Criar painel flutuante
-local gui = script.Parent
-local main = Instance.new("Frame")
-main.Size = UDim2.new(0, 300, 0, 400)
-main.Position = UDim2.new(0.5, -150, 0.5, -200)
-main.BackgroundColor3 = Color3.fromRGB(20,20,20)
-main.BorderSizePixel = 0
-main.Active = true
-main.Draggable = true
-main.Parent = gui
+-- PAINEL FLUTUANTE
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 220, 0, 160)
+frame.Position = UDim2.new(0.5, -110, 0.5, -80)
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true -- pode arrastar
+frame.Parent = gui
 
-local corner = Instance.new("UICorner", main)
-corner.CornerRadius = UDim.new(0,12)
+local corner = Instance.new("UICorner", frame)
+corner.CornerRadius = UDim.new(0, 12)
 
-local title = Instance.new("TextLabel", main)
-title.Size = UDim2.new(1,0,0,40)
-title.Text = "FILTEK HUB - SEU JOGO"
-title.TextColor3 = Color3.new(1,1,1)
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 40)
+title.Text = "TURBO GRILL FILTEK"
+title.TextColor3 = Color3.fromRGB(0, 255, 255)
 title.BackgroundTransparency = 1
 title.TextScaled = true
+title.Font = Enum.Font.GothamBold
+title.Parent = frame
 
-local function createToggle(name, y, callback)
-    local btn = Instance.new("TextButton", main)
-    btn.Size = UDim2.new(0.9,0,0,35)
-    btn.Position = UDim2.new(0.05,0,0,y)
-    btn.Text = name.." : OFF"
-    btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    btn.TextColor3 = Color3.new(1,1,1)
-    Instance.new("UICorner", btn)
-    
-    local enabled = false
-    btn.MouseButton1Click:Connect(function()
-        enabled = not enabled
-        btn.Text = name.." : "..(enabled and "ON" or "OFF")
-        btn.BackgroundColor3 = enabled and Color3.fromRGB(0,170,0) or Color3.fromRGB(40,40,40)
-        callback(enabled)
-    end)
+local btn = Instance.new("TextButton")
+btn.Size = UDim2.new(0.8, 0, 0, 50)
+btn.Position = UDim2.new(0.1, 0, 0.35, 0)
+btn.Text = "💉 FILTEK TURBO"
+btn.TextColor3 = Color3.fromRGB(255,255,255)
+btn.BackgroundColor3 = Color3.fromRGB(255, 80, 0)
+btn.Font = Enum.Font.GothamBold
+btn.TextScaled = true
+btn.Parent = frame
+
+Instance.new("UICorner", btn)
+
+local status = Instance.new("TextLabel")
+status.Size = UDim2.new(1, 0, 0, 30)
+status.Position = UDim2.new(0, 0, 0.75, 0)
+status.Text = "Entre no carro"
+status.TextColor3 = Color3.fromRGB(200,200,200)
+status.BackgroundTransparency = 1
+status.TextScaled = true
+status.Parent = frame
+
+-- FUNÇÃO FILTEK - TUDO NO MÁXIMO
+local function filtekCarro(car)
+	status.Text = "🔍 Escaneando..."
+	
+	local chassis = car:FindFirstChild("A-Chassis", true) or car:FindFirstChild("AChassis", true)
+	if not chassis then 
+		status.Text = "❌ Não é A-Chassis"
+		return 
+	end
+	
+	local tune = chassis:FindFirstChild("Tune") or car:FindFirstChild("Tune", true)
+	if not tune then
+		status.Text = "❌ Sem pasta Tune"
+		return
+	end
+	
+	status.Text = "💉 INJETANDO..."
+	
+	-- TUDO NO TALO - PRESSÃO, IGNIÇÃO, ROTAÇÃO
+	pcall(function()
+		-- MOTOR / POTÊNCIA MÁXIMA
+		if tune:FindFirstChild("Horsepower") then tune.Horsepower.Value = 5000 end
+		if tune:FindFirstChild("Torque") then tune.Torque.Value = 8000 end
+		if tune:FindFirstChild("MaxRPM") then tune.MaxRPM.Value = 12000 end -- rotação máxima
+		if tune:FindFirstChild("IdleRPM") then tune.IdleRPM.Value = 1500 end
+		if tune:FindFirstChild("Redline") then tune.Redline.Value = 11500 end
+		
+		-- TURBO NO MÁXIMO - PRESSÃO
+		if tune:FindFirstChild("TurboCharged") then tune.TurboCharged.Value = true end
+		if tune:FindFirstChild("Turbo") then tune.Turbo.Value = true end
+		if tune:FindFirstChild("TurboBoost") then tune.TurboBoost.Value = 80 end -- pressão do turbo
+		if tune:FindFirstChild("TurboPiping") then tune.TurboPiping.Value = true end
+		if tune:FindFirstChild("Boost") then tune.Boost.Value = 80 end
+		
+		-- IGNIÇÃO E INJEÇÃO
+		if tune:FindFirstChild("Ignition") then tune.Ignition.Value = true end
+		if tune:FindFirstChild("IgnTiming") then tune.IgnTiming.Value = 35 end
+		if tune:FindFirstChild("FuelInject") then tune.FuelInject.Value = true end
+		
+		-- PESO E GRIP - DEIXA LEVE E NÃO ESCORREGA
+		if tune:FindFirstChild("Weight") then tune.Weight.Value = 1200 end -- mais leve
+		if tune:FindFirstChild("WeightDist") then tune.WeightDist.Value = 50 end
+		if tune:FindFirstChild("TireGrip") then tune.TireGrip.Value = 3.5 end
+		if tune:FindFirstChild("BrakePower") then tune.BrakePower.Value = 10000 end
+		if tune:FindFirstChild("MaxSpeed") then tune.MaxSpeed.Value = 500 end
+		
+		-- TRANSMISSÃO - TROCA RÁPIDA
+		if tune:FindFirstChild("ShiftTime") then tune.ShiftTime.Value = 0.05 end
+	end)
+	
+	status.Text = "✅ FILTEKADO! 5000HP"
+	btn.Text = "✅ NO MÁXIMO!"
+	btn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+	wait(2)
+	btn.Text = "💉 FILTEK TURBO"
+	btn.BackgroundColor3 = Color3.fromRGB(255, 80, 0)
+	status.Text = "Pronto pra correr"
 end
+
+btn.MouseButton1Click:Connect(function()
+	local char = player.Character
+	if not char then return end
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if hum and hum.SeatPart then
+		local car = hum.SeatPart:FindFirstAncestorOfClass("Model")
+		if car then
+			filtekCarro(car)
+		else
+			status.Text = "❌ Senta no banco!"
+		end
+	else
+		status.Text = "❌ ENTRA NO CARRO!"
+	end
+end)
