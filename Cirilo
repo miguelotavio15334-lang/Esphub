@@ -1,28 +1,55 @@
--- SCRIPT UNIVERSAL - ASPIRADO FORTE 100+ NA PRIMEIRA
--- Cola dentro do A-Chassis Tune
+-- DriveSeat > LocalScript - Turbo Grill + Arrancada Sozinha [UNICO]
 
-local Tune = script.Parent
+local car = script.Parent.Parent
+local player = game.Players.LocalPlayer
+local driveSeat = script.Parent
 
--- Motor Aspirado Forte
-Tune.Engine = "Aspirado Forte"
-Tune.Horsepower = 650 -- potencia
-Tune.Redline = 9000
-Tune.PeakRPM = 8500
+local turboAtivo = false
 
--- Desativa Turbo pra ficar aspirado puro
-Tune.TurboEnabled = false
-Tune.TurboBoost = 0
+-- CONFIG DO MELHOR POSSIVEL
+local function AtivarTurboGrill()
+	local tune = car:FindFirstChild("A-Chassis Tune")
+	if not tune then return end
+	tune = require(tune)
+	
+	-- Deixa o carro no melhor possível
+	tune.TurboCharged = true
+	tune.T_ChargerVisible = true
+	tune.HP = 950 -- força máxima sem quebrar
+	tune.Boost = 35
+	tune.PeakRPM = 8800
+	tune.Redline = 9500
+	tune.TurboStall = 15 -- grill estralando
+	tune.TurboStallVolume = 1
+	
+	turboAtivo = true
+	print("TURBO GRILL ATIVADO - Melhor setup")
+end
 
--- Cambio Longo - Segredo dos 100 na primeira
-Tune.TransModes = {"Auto", "Manual"}
-Tune.Gears = 4 -- só 4 marchas pra alongar
-Tune.FinalDrive = 2.70 -- diferencial longo (quanto menor, mais final)
-Tune.Ratios = {
-	3.10, -- 1ª vai dar 110km/h
-	2.00, -- 2ª
-	1.30, -- 3ª
-	0.90, -- 4ª
-}
+local function ArrancadaSozinha()
+	if not turboAtivo then
+		AtivarTurboGrill()
+	end
+	
+	-- Trava e faz o 2-step
+	driveSeat.ThrottleFloat = 1 -- acelera sozinho
+	print("Segurando no grill...")
+	task.wait(1.8) -- tempo do grill
+	driveSeat.ThrottleFloat = 0
+	task.wait(0.1)
+	driveSeat.ThrottleFloat = 1 -- SOLTA TUDO
+	print("ARRANCADA!")
+end
 
-Tune.RevBounce = true
-Tune.Limiter = true
+-- TECLAS: G = Ativa Grill | H = Arrancada Sozinha
+game:GetService("UserInputService").InputBegan:Connect(function(input, proc)
+	if proc then return end
+	if input.KeyCode == Enum.KeyCode.G then
+		AtivarTurboGrill()
+	end
+	if input.KeyCode == Enum.KeyCode.H then
+		ArrancadaSozinha()
+	end
+end)
+
+print("Script Turbo Grill + Arrancada carregado! [G] Grill | [H] Arranca")
