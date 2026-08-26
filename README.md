@@ -49,12 +49,44 @@ if queueteleport then
 end
 
 pcall(function() LP.PlayerGui:FindFirstChild("MIIIGUEX_HUB"):Destroy() end)
-local gui = Instance.new("ScreenGui", LP.PlayerGui) gui.Name = "MIIIGUEX_HUB" gui.ResetOnSpawn = false
-local main = Instance.new("Frame", gui) main.Size = UDim2.new(0,380,0,650) main.Position = UDim2.new(0.5,-190,0.5,-325) main.BackgroundColor3 = Color3.fromRGB(120,15,15) main.Active=true main.Draggable=true Instance.new("UICorner", main).CornerRadius = UDim.new(0,18)
-local stroke = Instance.new("UIStroke", main) stroke.Color = Color3.fromRGB(255,0,0) stroke.Thickness = 2
+local gui = Instance.new("ScreenGui", LP.PlayerGui)
+gui.Name = "MIIIGUEX_HUB"
+gui.ResetOnSpawn = false
+
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0,380,0,650)
+main.Position = UDim2.new(0.5,-190,0.5,-325)
+main.BackgroundColor3 = Color3.fromRGB(10,5,5)
+main.BackgroundTransparency = 0.05
+main.Active = true
+main.Draggable = true
+Instance.new("UICorner", main).CornerRadius = UDim.new(0,18)
+
+-- FUNDO DO HUB
+-- Depois de enviar a imagem para o Roblox, troque SEU_ID_AQUI pelo ID dela.
+local bg = Instance.new("ImageLabel", main)
+bg.Name = "MIIIGUEX_BACKGROUND"
+bg.Size = UDim2.new(1,0,1,0)
+bg.Position = UDim2.new(0,0,0,0)
+bg.BackgroundTransparency = 1
+bg.Image = "rbxassetid://SEU_ID_AQUI"
+bg.ImageTransparency = 0.12
+bg.ScaleType = Enum.ScaleType.Crop
+bg.ZIndex = 0
+Instance.new("UICorner", bg).CornerRadius = UDim.new(0,18)
+
+local bgOverlay = Instance.new("Frame", main)
+bgOverlay.Name = "DarkOverlay"
+bgOverlay.Size = UDim2.new(1,0,1,0)
+bgOverlay.BackgroundColor3 = Color3.fromRGB(0,0,0)
+bgOverlay.BackgroundTransparency = 0.55
+bgOverlay.BorderSizePixel = 0
+bgOverlay.ZIndex = 1
+Instance.new("UICorner", bgOverlay).CornerRadius = UDim.new(0,18)
+local stroke = Instance.new("UIStroke", main) stroke.Color = Color3.fromRGB(255,0,0) stroke.Thickness = 2 stroke.ZIndex = 10
 local openBtn = Instance.new("TextButton", gui) openBtn.Size=UDim2.new(0,60,0,60) openBtn.Position=UDim2.new(0,15,0.5,-30) openBtn.Text="M" openBtn.Visible=true openBtn.BackgroundColor3=Color3.fromRGB(120,15,15) openBtn.TextColor3=Color3.new(1,1,1) openBtn.Font=Enum.Font.GothamBold openBtn.TextSize=24 Instance.new("UICorner", openBtn).CornerRadius=UDim.new(0,30) local stroke2 = Instance.new("UIStroke", openBtn) stroke2.Thickness=2 stroke2.Color=Color3.fromRGB(255,0,0)
 
-local function btn(txt,y,col) local b=Instance.new("TextButton", main) b.Position=UDim2.new(0,15,0,y) b.Size=UDim2.new(1,-30,0,44) b.Text=txt b.BackgroundColor3=col or Color3.fromRGB(70,15,15) b.TextColor3=Color3.new(1,1,1) b.Font=Enum.Font.GothamBold b.TextSize=12 Instance.new("UICorner", b).CornerRadius=UDim.new(0,12) return b end
+local function btn(txt,y,col) local b=Instance.new("TextButton", main) b.Position=UDim2.new(0,15,0,y) b.Size=UDim2.new(1,-30,0,44) b.Text=txt b.BackgroundColor3=col or Color3.fromRGB(70,15,15) b.TextColor3=Color3.new(1,1,1) b.Font=Enum.Font.GothamBold b.TextSize=12 b.ZIndex=5 Instance.new("UICorner", b).CornerRadius=UDim.new(0,12) return b end
 
 local bSpeed=btn("SPEED 150: ON",50,Color3.fromRGB(35,85,55))
 local bNo=btn("NoClip: ON",98,Color3.fromRGB(35,85,55))
